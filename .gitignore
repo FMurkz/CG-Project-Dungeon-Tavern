@@ -67,3 +67,19 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# CLion IDE
+.idea/
+
+# CLion build directories (Ninja-based, doesn't match the build/ pattern above)
+cmake-build-debug/
+cmake-build-release/
+
+# FetchContent downloads (GLFW, GLM cloned into the build dir)
+_deps/
+
+# Compiled shaders
+*.spv
+
+# macOS metadata
+.DS_Store
