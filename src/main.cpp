@@ -33,7 +33,8 @@ protected:
     DescriptorSet DS_Global;
 
     // Camera State
-    float Ar;
+    float Ar = 0.0f;
+    glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -5.0f);  // starting position
     float camYaw = 0.0f;
     float camPitch = 0.0f;
     float camDist = 3.0f;
@@ -169,22 +170,29 @@ protected:
         lastTime = currentTime;
 
         // Input
-        const float ROT_SPEED = glm::radians(90.0f);
-        if (glfwGetKey(window, GLFW_KEY_A)) camYaw   -= ROT_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_D)) camYaw   += ROT_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_W)) camDist += ROT_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_S)) camDist -= ROT_SPEED * deltaT;
-
+        // Turning: A/D rotates left/right, Up/Down tilts the view
+        constexpr float ROT_SPEED = glm::radians(90.0f);
+        if (glfwGetKey(window, GLFW_KEY_D))    camYaw   -= ROT_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_A))    camYaw   += ROT_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_UP))   camPitch += ROT_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_DOWN)) camPitch -= ROT_SPEED * deltaT;
         camPitch = glm::clamp(camPitch, glm::radians(-85.0f), glm::radians(85.0f));
 
-        // Matrices
-        glm::vec3 cameraPos = glm::vec3(
-            camDist * cos(camPitch) * sin(camYaw),
-            camDist * sin(camPitch),
-            camDist * cos(camPitch) * cos(camYaw)
+        // Forward direction the camera is facing
+        const glm::vec3 forward = glm::vec3(
+            cos(camPitch) * sin(camYaw),
+            sin(camPitch),
+            cos(camPitch) * cos(camYaw)
         );
 
-        glm::mat4 view = glm::lookAt(cameraPos, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        // Walking: W/S translates along the horizontal projection of forward
+        glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
+        constexpr float MOVE_SPEED = 3.0f;
+        if (glfwGetKey(window, GLFW_KEY_W)) cameraPos += walkDir * MOVE_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_S)) cameraPos -= walkDir * MOVE_SPEED * deltaT;
+
+        // Matrices
+        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + forward, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 100.0f);
         proj[1][1] *= -1;
 
