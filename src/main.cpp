@@ -172,8 +172,8 @@ protected:
         const float ROT_SPEED = glm::radians(90.0f);
         if (glfwGetKey(window, GLFW_KEY_A)) camYaw   -= ROT_SPEED * deltaT;
         if (glfwGetKey(window, GLFW_KEY_D)) camYaw   += ROT_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_W)) camPitch += ROT_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_S)) camPitch -= ROT_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_W)) camDist += ROT_SPEED * deltaT;
+        if (glfwGetKey(window, GLFW_KEY_S)) camDist -= ROT_SPEED * deltaT;
 
         camPitch = glm::clamp(camPitch, glm::radians(-85.0f), glm::radians(85.0f));
 
