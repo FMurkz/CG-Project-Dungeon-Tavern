@@ -1,10 +1,11 @@
 #include "modules/Starter.hpp"
-#include "SceneObjects.hpp"
+#include "sceneObjects.hpp"
 #include <chrono>
 
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 normal;
+    glm::vec2 uv;
 };
 
 struct GlobalUniformBufferObject {
@@ -56,14 +57,17 @@ protected:
 
         DSL_Object.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT,
-             sizeof(UniformBufferObject), 1}
+             sizeof(UniformBufferObject), 1},
+            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
+         0, 1}
         });
 
         VD.init(this,
             {{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}},
             {
                 {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos),    sizeof(glm::vec3), POSITION},
-                {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal), sizeof(glm::vec3), NORMAL}
+                {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal), sizeof(glm::vec3), NORMAL},
+                {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(Vertex, uv),     sizeof(glm::vec2), UV}
             }
         );
 
@@ -78,7 +82,7 @@ protected:
 
         DPSZs.uniformBlocksInPool = scene.count() + 1;
         DPSZs.setsInPool          = scene.count() + 1;
-        DPSZs.texturesInPool      = 0;
+        DPSZs.texturesInPool      = 2;
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);

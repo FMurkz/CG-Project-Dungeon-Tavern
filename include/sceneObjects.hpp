@@ -6,6 +6,7 @@
 struct SceneVertex {
     glm::vec3 pos;
     glm::vec3 normal;
+    glm::vec2 uv;
 };
 
 // Per-object uniform (must match shader's set 1, binding 0).
@@ -20,6 +21,10 @@ struct SceneObjects {
     // ---- Models ----
     Model M_Character;
     Model M_Floor;
+
+    // ---- Textures ----
+    Texture T_Character;
+    Texture T_Floor;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;

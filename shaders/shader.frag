@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec3 fragWorldPos;
 layout(location = 1) in vec3 fragNormal;
+layout(location = 2) in vec2 fragUV;
 
 layout(location = 0) out vec4 outColor;
 
@@ -11,8 +12,10 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     vec3 eyePos;
 } gubo;
 
+layout(set = 1, binding = 1) uniform sampler2D diffuseTex;
+
 void main() {
-    vec3 albedo = vec3(1.0, 0.5, 0.0);  // base orange color
+    vec3 albedo = texture(diffuseTex, fragUV).rgb;   // ← was hardcoded orange
 
     vec3 N = normalize(fragNormal);
     vec3 L = normalize(-gubo.lightDir);              // toward the light
