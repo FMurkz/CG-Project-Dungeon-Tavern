@@ -12,7 +12,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     //Textures
     T_Character.init(bp, "assets/textures/character1.png");
     T_Character2.init(bp, "assets/textures/character2.jpg");
-    T_Table.init(bp, "assets/textures/table2.png");
+    T_Table.init(bp, "assets/textures/table.jpg");
     T_Fire.init(bp, "assets/textures/fireplace_Albedo.png");
     T_Floor.init(bp, "assets/textures/floor.jpg");
     T_Bar.init(bp, "assets/textures/BeerBar_Base_color_1001.png");
