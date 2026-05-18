@@ -4,12 +4,14 @@
 void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     // Models: loaded from file
     M_Character.init(bp, VD, "assets/models/character1.obj", OBJ);
+    M_Torch.init(bp, VD, "assets/models/torch.obj", OBJ);
 
     //Textures
     T_Character.init(bp, "assets/textures/character1.png");
     T_Floor.init(bp, "assets/textures/floor.jpg");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.png");
+    T_Torch.init(bp, "assets/textures/torchColor.png");
 
 
     // Floor: procedural quad on the XZ plane at y = 0, normals pointing up
@@ -48,6 +50,15 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     );
     M_WallN.indices = {0, 2, 1,  0, 3, 2};
     M_WallN.initMesh(bp, VD);
+
+    constexpr float ROOM_HALF_T = 10.0f;
+    torchPositions = {
+        {-ROOM_HALF_T + 0.1f, 2.5f,  4.0f},
+        {-ROOM_HALF_T + 0.1f, 2.5f, -4.0f},
+        { ROOM_HALF_T - 0.1f, 2.5f,  4.0f},
+        { ROOM_HALF_T - 0.1f, 2.5f, -4.0f},
+    };
+    torchYaws = { 90.0f, 90.0f, -90.0f, -90.0f };
 }
 
 // South wall: at z = -ROOM_HALF, faces +Z (inward)
@@ -127,11 +138,18 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_WallE    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
     DS_WallW    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
     DS_Ceiling  .init(bp, DSL_Object, { T_Ceiling  .getViewAndSampler() });
+
+    DS_Torches.resize(torchPositions.size());
+    for (auto& ds : DS_Torches) {
+        ds.init(bp, DSL_Object, { T_Torch.getViewAndSampler() });
+    }
 }
 
 void SceneObjects::cleanupDescriptorSets() {
     DS_Character.cleanup();
     DS_Floor.cleanup();
+    for (auto& ds : DS_Torches) ds.cleanup();
+    DS_Torches.clear();
 
     DS_WallN.cleanup();
     DS_WallS.cleanup();
@@ -143,8 +161,10 @@ void SceneObjects::cleanupDescriptorSets() {
 void SceneObjects::cleanupAll() {
     //Models
     M_Character.cleanup();
-    M_Floor.cleanup();
+    M_Torch.cleanup();
 
+    //Room
+    M_Floor.cleanup();
     M_WallN.cleanup();
     M_WallS.cleanup();
     M_WallE.cleanup();
@@ -156,14 +176,23 @@ void SceneObjects::cleanupAll() {
     T_Floor.cleanup();
     T_Wall.cleanup();
     T_Ceiling.cleanup();
+    T_Torch.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
+    //Models
     DS_Character.bind(cb, P, 1, currentImage);
     M_Character.bind(cb);
     vkCmdDrawIndexed(cb,
         static_cast<uint32_t>(M_Character.indices.size()), 1, 0, 0, 0);
+    //-------Torches------------
+    M_Torch.bind(cb);
+    for (auto& ds : DS_Torches) {
+        ds.bind(cb, P, 1, currentImage);
+        vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Torch.indices.size()), 1, 0, 0, 0);
+    }
 
+    //Room
     DS_Floor.bind(cb, P, 1, currentImage);
     M_Floor.bind(cb);
     vkCmdDrawIndexed(cb,
@@ -215,6 +244,20 @@ void SceneObjects::updateUBOs(int currentImage,
             // so this computes the yaw needed to face the player.
             npcRotation = std::atan2(directionToPlayer.x, directionToPlayer.z);
         }
+    }
+
+    //-----Torches-----
+    const float TORCH_SCALE = 0.01f;
+    for (size_t i = 0; i < DS_Torches.size(); ++i) {
+        glm::mat4 m =
+              glm::translate(glm::mat4(1.0f), torchPositions[i])
+            * glm::rotate(glm::mat4(1.0f), glm::radians(torchYaws[i]), glm::vec3(0,1,0))
+            * glm::scale(glm::mat4(1.0f), glm::vec3(TORCH_SCALE));
+        UniformBufferObject u{};
+        u.modelMat  = m;
+        u.mvpMat    = proj * view * m;
+        u.normalMat = glm::inverse(glm::transpose(m));
+        DS_Torches[i].map(currentImage, &u, 0);
     }
 
     glm::mat4 charModel =
