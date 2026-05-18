@@ -21,18 +21,38 @@ struct SceneObjects {
     //Characters and objects
     // ---- Models ----
     Model M_Character;
+    Model M_Character2;
+    Model M_Table;
+    Model M_Fire;
+    Model M_Bar;
+    Model M_Bar2;
+
 
     // ---- Textures ----
     Texture T_Character;
+    Texture T_Character2;
+    Texture T_Table;
+    Texture T_Fire;
+    Texture T_Bar;
+    Texture T_Bar2;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
+    DescriptorSet DS_Character2;
+    DescriptorSet DS_Table_A;
+    DescriptorSet DS_Table_B;
+    DescriptorSet DS_Table_C;
+    DescriptorSet DS_Fire;
+    DescriptorSet DS_Bar;
+    DescriptorSet DS_Bar2;
 
 
     // ---- Room: floor, 4 walls, ceiling ----
     Model         M_Floor,  M_WallN,  M_WallS,  M_WallE,  M_WallW,  M_Ceiling;
     DescriptorSet DS_Floor, DS_WallN, DS_WallS, DS_WallE, DS_WallW, DS_Ceiling;
     Texture       T_Floor,  T_Wall,   T_Ceiling;
+
+
 
 
     // Load all models. Call from localInit().
@@ -55,5 +75,5 @@ struct SceneObjects {
     void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted, const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 7; }  // character + floor + 4 walls + Ceiling
+    int count() const { return 14; }  //
 };
