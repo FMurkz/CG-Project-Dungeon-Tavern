@@ -129,9 +129,11 @@ protected:
         scene.loadAll(this, &VD);
         dialogBox.init(this, &VD_UI);
 
-        DPSZs.uniformBlocksInPool = scene.count() + 1;
-        DPSZs.setsInPool          = scene.count() + 1;
-        DPSZs.texturesInPool      = 7;
+        int sceneTextures = scene.count();
+        int uiTextures    = 1;
+        DPSZs.texturesInPool      = sceneTextures + uiTextures;
+        DPSZs.uniformBlocksInPool = scene.count() + 1;   // objects + global
+        DPSZs.setsInPool          = scene.count() + 2;   // objects + global + UI
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
@@ -152,7 +154,6 @@ protected:
         P.cleanup();
         RP.cleanup();
 
-        P.cleanup();
         P_UI.cleanup();
 
         DS_Global.cleanup();
@@ -171,7 +172,9 @@ protected:
 
         DSL_Object.cleanup();
         DSL_Global.cleanup();
+        DSL_UI.cleanup();
 
+        VD.cleanup();
         VD_UI.cleanup();
     }
 
