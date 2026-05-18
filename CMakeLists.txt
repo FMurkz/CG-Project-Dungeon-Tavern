@@ -5,7 +5,9 @@ project(DungeonTavern LANGUAGES CXX)
 set(MAIN_DIR ${CMAKE_SOURCE_DIR})
 file(GLOB SRC_FILES CONFIGURE_DEPENDS "${MAIN_DIR}/src/*.cpp")
 
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+add_executable(${PROJECT_NAME} ${SRC_FILES}
+        include/sceneObjects.hpp
+        src/sceneObjects.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE "${MAIN_DIR}/include")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
