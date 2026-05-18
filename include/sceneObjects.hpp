@@ -20,15 +20,33 @@ struct UniformBufferObject {
 struct SceneObjects {
     // ---- Models ----
     Model M_Character;
+    Model M_Character2;
     Model M_Floor;
+    Model M_Table;
+    Model M_Fire;
+    Model M_Bar;
+    Model M_Bar2;
+
 
     // ---- Textures ----
     Texture T_Character;
+    Texture T_Character2;
     Texture T_Floor;
+    Texture T_Table;
+    Texture T_Fire;
+    Texture T_Bar;
+    Texture T_Bar2;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
+    DescriptorSet DS_Character2;
     DescriptorSet DS_Floor;
+    DescriptorSet DS_Table_A;
+    DescriptorSet DS_Table_B;
+    DescriptorSet DS_Table_C;
+    DescriptorSet DS_Fire;
+    DescriptorSet DS_Bar;
+    DescriptorSet DS_Bar2;
 
     // Load all models. Call from localInit().
     void loadAll(BaseProject* bp, VertexDescriptor* VD);
@@ -50,5 +68,5 @@ struct SceneObjects {
     void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 2; }  // character + floor
+    int count() const { return 9; }  //
 };
