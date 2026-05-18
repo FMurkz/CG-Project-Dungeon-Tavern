@@ -1,5 +1,6 @@
 #include "modules/Starter.hpp"
 #include "sceneObjects.hpp"
+#include "NPCInteraction.hpp"
 #include <chrono>
 
 struct Vertex {
@@ -34,6 +35,12 @@ protected:
     glm::vec3 cameraPos = glm::vec3(0.0f, 1.5f, -3.5f);
     float camYaw = 0.0f;
     float camPitch = 0.0f;
+
+    // NPC interaction state
+    NPCInteraction npcInteraction{
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        2.0f
+    };
 
     void setWindowParameters() {
         windowWidth = 800;
@@ -152,13 +159,16 @@ protected:
         if (glfwGetKey(window, GLFW_KEY_W)) cameraPos += walkDir * MOVE_SPEED * deltaT;
         if (glfwGetKey(window, GLFW_KEY_S)) cameraPos -= walkDir * MOVE_SPEED * deltaT;
 
+        // NPC interaction
+        npcInteraction.update(window, cameraPos);
+
         // Matrices
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + forward, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 100.0f);
         proj[1][1] *= -1;
 
         // Update all object UBOs (transforms live in SceneObjects)
-        scene.updateUBOs(currentImage, proj, view);
+        scene.updateUBOs(currentImage, proj, view, npcInteraction.hasInteracted());
 
         // Global UBO (lighting + camera)
         GlobalUniformBufferObject gubo{};
