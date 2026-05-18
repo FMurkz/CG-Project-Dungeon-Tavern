@@ -1,16 +1,22 @@
 #include "sceneObjects.hpp"
 
 void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
-    // Character: loaded from file
-    M_Character.init(bp, VD, "assets/models/character.obj", OBJ);
+    // Models: loaded from file
+    M_Character.init(bp, VD, "assets/models/character1.obj", OBJ);
+
+    //Textures
+    T_Character.init(bp, "assets/textures/character1.png");
+    T_Floor.init(bp, "assets/textures/floor.jpg");
+
 
     // Floor: procedural quad on the XZ plane at y = 0, normals pointing up
     constexpr float FLOOR_SIZE = 10.0f;
+    constexpr float TILE = 5.0f;
     std::vector<SceneVertex> floorVerts = {
-        {{-FLOOR_SIZE, 0.0f, -FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}},
-        {{ FLOOR_SIZE, 0.0f, -FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}},
-        {{ FLOOR_SIZE, 0.0f,  FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}},
-        {{-FLOOR_SIZE, 0.0f,  FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}},
+        {{-FLOOR_SIZE, 0.0f, -FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{ FLOOR_SIZE, 0.0f, -FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}, {TILE, 0.0f}},
+        {{ FLOOR_SIZE, 0.0f,  FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}, {TILE, TILE}},
+        {{-FLOOR_SIZE, 0.0f,  FLOOR_SIZE}, {0.0f, 1.0f, 0.0f}, {0.0f, TILE}},
     };
     M_Floor.vertices = std::vector<unsigned char>(
         reinterpret_cast<unsigned char*>(floorVerts.data()),
@@ -22,8 +28,8 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
 }
 
 void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object) {
-    DS_Character.init(bp, DSL_Object, {});
-    DS_Floor.init(bp, DSL_Object, {});
+    DS_Character.init(bp, DSL_Object, { T_Character.getViewAndSampler() });
+    DS_Floor    .init(bp, DSL_Object, { T_Floor    .getViewAndSampler() });
 }
 
 void SceneObjects::cleanupDescriptorSets() {
@@ -32,8 +38,12 @@ void SceneObjects::cleanupDescriptorSets() {
 }
 
 void SceneObjects::cleanupAll() {
+    //Models
     M_Character.cleanup();
     M_Floor.cleanup();
+    //Textures
+    T_Character.cleanup();
+    T_Floor.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
