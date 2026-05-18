@@ -8,6 +8,7 @@ private:
     float interactionDistance;
     bool interacted;
     bool eWasPressed;
+    bool playerIsNearNpc;
 
 public:
     NPCInteraction(glm::vec3 position, float distance);
@@ -15,4 +16,6 @@ public:
     void update(GLFWwindow* window, const glm::vec3& playerPosition);
 
     bool hasInteracted() const;
+
+    bool isPlayerNearNpc() const;
 };
