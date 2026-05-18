@@ -2,7 +2,8 @@
 #include <cmath>
 
 void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
-    // Models: loaded from file
+    //==============================================================
+    //                  Models: loaded from file
     M_Character.init(bp, VD, "assets/models/character1.obj", OBJ);
     M_Table.init(bp, VD, "assets/models/table.obj", OBJ);
     M_Character2.init(bp, VD, "assets/models/character2.obj", OBJ);
@@ -10,7 +11,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Bar.init(bp, VD, "assets/models/bar.obj", OBJ);
     M_Bar2.init(bp, VD, "assets/models/bar2.obj", OBJ);
 
-    //Textures
+    //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
     T_Character2.init(bp, "assets/textures/character2.jpg");
     T_Table.init(bp, "assets/textures/table.jpg");
@@ -20,8 +21,10 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.png");
+    //============================================================
 
-
+    //==========================================================================
+    //                          ROOM: Floor, Walls, Ceiling
     // Floor: procedural quad on the XZ plane at y = 0, normals pointing up
     constexpr float ROOM_HALF = 10.0f;
     constexpr float TILE = 5.0f;
@@ -45,100 +48,94 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     constexpr float WALL_TILE_Y = 1.0f;    // texture repeats vertically
 
     // North wall: at z = +ROOM_HALF, faces -Z (inward)
-{
-    std::vector<SceneVertex> verts = {
+    std::vector<SceneVertex> vertsN = {
         {{-ROOM_HALF, 0.0f,    ROOM_HALF}, {0.0f, 0.0f, -1.0f}, {0.0f,        0.0f       }},
         {{ ROOM_HALF, 0.0f,    ROOM_HALF}, {0.0f, 0.0f, -1.0f}, {WALL_TILE_X, 0.0f       }},
         {{ ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, 0.0f, -1.0f}, {WALL_TILE_X, WALL_TILE_Y}},
         {{-ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, 0.0f, -1.0f}, {0.0f,        WALL_TILE_Y}},
     };
     M_WallN.vertices = std::vector<unsigned char>(
-        reinterpret_cast<unsigned char*>(verts.data()),
-        reinterpret_cast<unsigned char*>(verts.data()) + verts.size() * sizeof(SceneVertex)
+        reinterpret_cast<unsigned char*>(vertsN.data()),
+        reinterpret_cast<unsigned char*>(vertsN.data()) + vertsN.size() * sizeof(SceneVertex)
     );
     M_WallN.indices = {0, 2, 1,  0, 3, 2};
     M_WallN.initMesh(bp, VD);
-}
 
-// South wall: at z = -ROOM_HALF, faces +Z (inward)
-{
-    std::vector<SceneVertex> verts = {
+    // South wall: at z = -ROOM_HALF, faces +Z (inward)
+    std::vector<SceneVertex> vertsS = {
         {{ ROOM_HALF, 0.0f,   -ROOM_HALF}, {0.0f, 0.0f, 1.0f}, {0.0f,        0.0f       }},
         {{-ROOM_HALF, 0.0f,   -ROOM_HALF}, {0.0f, 0.0f, 1.0f}, {WALL_TILE_X, 0.0f       }},
         {{-ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, 0.0f, 1.0f}, {WALL_TILE_X, WALL_TILE_Y}},
         {{ ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, 0.0f, 1.0f}, {0.0f,        WALL_TILE_Y}},
     };
     M_WallS.vertices = std::vector<unsigned char>(
-        reinterpret_cast<unsigned char*>(verts.data()),
-        reinterpret_cast<unsigned char*>(verts.data()) + verts.size() * sizeof(SceneVertex)
+        reinterpret_cast<unsigned char*>(vertsS.data()),
+        reinterpret_cast<unsigned char*>(vertsS.data()) + vertsS.size() * sizeof(SceneVertex)
     );
     M_WallS.indices = {0, 2, 1,  0, 3, 2};
     M_WallS.initMesh(bp, VD);
-}
 
-// East wall: at x = +ROOM_HALF, faces -X (inward)
-{
-    std::vector<SceneVertex> verts = {
+    // East wall: at x = +ROOM_HALF, faces -X (inward)
+    std::vector<SceneVertex> vertsE = {
         {{ ROOM_HALF, 0.0f,    ROOM_HALF}, {-1.0f, 0.0f, 0.0f}, {0.0f,        0.0f       }},
         {{ ROOM_HALF, 0.0f,   -ROOM_HALF}, {-1.0f, 0.0f, 0.0f}, {WALL_TILE_X, 0.0f       }},
         {{ ROOM_HALF, WALL_H, -ROOM_HALF}, {-1.0f, 0.0f, 0.0f}, {WALL_TILE_X, WALL_TILE_Y}},
         {{ ROOM_HALF, WALL_H,  ROOM_HALF}, {-1.0f, 0.0f, 0.0f}, {0.0f,        WALL_TILE_Y}},
     };
     M_WallE.vertices = std::vector<unsigned char>(
-        reinterpret_cast<unsigned char*>(verts.data()),
-        reinterpret_cast<unsigned char*>(verts.data()) + verts.size() * sizeof(SceneVertex)
+        reinterpret_cast<unsigned char*>(vertsE.data()),
+        reinterpret_cast<unsigned char*>(vertsE.data()) + vertsE.size() * sizeof(SceneVertex)
     );
     M_WallE.indices = {0, 2, 1,  0, 3, 2};
     M_WallE.initMesh(bp, VD);
-}
 
-// West wall: at x = -ROOM_HALF, faces +X (inward)
-{
-    std::vector<SceneVertex> verts = {
+    // West wall: at x = -ROOM_HALF, faces +X (inward)
+    std::vector<SceneVertex> vertsW = {
         {{-ROOM_HALF, 0.0f,   -ROOM_HALF}, {1.0f, 0.0f, 0.0f}, {0.0f,        0.0f       }},
         {{-ROOM_HALF, 0.0f,    ROOM_HALF}, {1.0f, 0.0f, 0.0f}, {WALL_TILE_X, 0.0f       }},
         {{-ROOM_HALF, WALL_H,  ROOM_HALF}, {1.0f, 0.0f, 0.0f}, {WALL_TILE_X, WALL_TILE_Y}},
         {{-ROOM_HALF, WALL_H, -ROOM_HALF}, {1.0f, 0.0f, 0.0f}, {0.0f,        WALL_TILE_Y}},
     };
     M_WallW.vertices = std::vector<unsigned char>(
-        reinterpret_cast<unsigned char*>(verts.data()),
-        reinterpret_cast<unsigned char*>(verts.data()) + verts.size() * sizeof(SceneVertex)
+        reinterpret_cast<unsigned char*>(vertsW.data()),
+        reinterpret_cast<unsigned char*>(vertsW.data()) + vertsW.size() * sizeof(SceneVertex)
     );
     M_WallW.indices = {0, 2, 1,  0, 3, 2};
     M_WallW.initMesh(bp, VD);
-}
 
     // Ceiling: at y = WALL_H, faces down (-Y)
-    {
-        constexpr float CEIL_TILE = 5.0f;
-        std::vector<SceneVertex> verts = {
-            {{-ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {0.0f,      0.0f     }},
-            {{ ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {CEIL_TILE, 0.0f     }},
-            {{ ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {CEIL_TILE, CEIL_TILE}},
-            {{-ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {0.0f,      CEIL_TILE}},
-        };
-        M_Ceiling.vertices = std::vector<unsigned char>(
-            reinterpret_cast<unsigned char*>(verts.data()),
-            reinterpret_cast<unsigned char*>(verts.data()) + verts.size() * sizeof(SceneVertex)
-        );
 
-        M_Ceiling.indices = {0, 1, 2,  0, 2, 3};
+    constexpr float CEIL_TILE = 5.0f;
+    std::vector<SceneVertex> vertsC = {
+        {{-ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {0.0f,      0.0f     }},
+        {{ ROOM_HALF, WALL_H, -ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {CEIL_TILE, 0.0f     }},
+        {{ ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {CEIL_TILE, CEIL_TILE}},
+        {{-ROOM_HALF, WALL_H,  ROOM_HALF}, {0.0f, -1.0f, 0.0f}, {0.0f,      CEIL_TILE}},
+    };
+    M_Ceiling.vertices = std::vector<unsigned char>(
+        reinterpret_cast<unsigned char*>(vertsC.data()),
+        reinterpret_cast<unsigned char*>(vertsC.data()) + vertsC.size() * sizeof(SceneVertex)
+    );
 
-        M_Ceiling.initMesh(bp, VD);
-    }
+    M_Ceiling.indices = {0, 1, 2,  0, 2, 3};
+
+    M_Ceiling.initMesh(bp, VD);
+    //=====================================================
 }
 
+
 void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object) {
+    //Models
     DS_Character.init(bp, DSL_Object, { T_Character.getViewAndSampler() });
     DS_Character2.init(bp, DSL_Object, { T_Character2.getViewAndSampler() });
     DS_Table_A.init(bp, DSL_Object, { T_Table.getViewAndSampler() });
     DS_Table_B.init(bp, DSL_Object, { T_Table.getViewAndSampler() });
     DS_Table_C.init(bp, DSL_Object, { T_Table.getViewAndSampler() });
     DS_Fire.init(bp, DSL_Object, { T_Fire.getViewAndSampler() });
-    DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_Bar.init(bp, DSL_Object, { T_Bar.getViewAndSampler() });
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
-
+    //Room
+    DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
     DS_WallS    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
     DS_WallE    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -147,6 +144,7 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
 }
 
 void SceneObjects::cleanupDescriptorSets() {
+    //Models
     DS_Character.cleanup();
     DS_Character2.cleanup();
     DS_Table_A.cleanup();
@@ -155,6 +153,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Fire.cleanup();
     DS_Floor.cleanup();
 
+    //Room
     DS_WallN.cleanup();
     DS_WallS.cleanup();
     DS_WallE.cleanup();
@@ -169,18 +168,19 @@ void SceneObjects::cleanupAll() {
     M_Character.cleanup();
     M_Character2.cleanup();
     M_Table.cleanup();
-    M_Floor.cleanup();
+    M_Fire.cleanup();
+    M_Bar.cleanup();
+    M_Bar2.cleanup();
 
+    //Room
+    M_Floor.cleanup();
     M_WallN.cleanup();
     M_WallS.cleanup();
     M_WallE.cleanup();
     M_WallW.cleanup();
     M_Ceiling.cleanup();
 
-    // Textures
-    M_Fire.cleanup();
-    M_Bar.cleanup();
-    M_Bar2.cleanup();
+
     //Textures
     T_Character.cleanup();
     T_Character2.cleanup();
@@ -220,12 +220,7 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Table.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Table.indices.size()), 1, 0, 0, 0);
 
-    // Floor
-    DS_Floor.bind(cb, P, 1, currentImage);
-    M_Floor.bind(cb);
-    vkCmdDrawIndexed(cb,
-        static_cast<uint32_t>(M_Floor.indices.size()), 1, 0, 0, 0);
-    // Fireplace
+   // Fireplace
     DS_Fire.bind(cb, P, 1, currentImage);
     M_Fire.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Fire.indices.size()), 1, 0, 0, 0);
@@ -239,7 +234,13 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Bar2.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Bar2.indices.size()), 1, 0, 0, 0);
 
-
+    //====================================================================
+    //                          ROOM
+    // Floor
+    DS_Floor.bind(cb, P, 1, currentImage);
+    M_Floor.bind(cb);
+    vkCmdDrawIndexed(cb,
+        static_cast<uint32_t>(M_Floor.indices.size()), 1, 0, 0, 0);
 
     DS_WallN.bind(cb, P, 1, currentImage);
     M_WallN.bind(cb);
@@ -260,6 +261,7 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     DS_Ceiling.bind(cb, P, 1, currentImage);
     M_Ceiling.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Ceiling.indices.size()), 1, 0, 0, 0);
+    //=======================================================================
 }
 
 
@@ -306,7 +308,6 @@ void SceneObjects::updateUBOs(int currentImage,
     roomUbo.mvpMat    = proj * view * IdentityModel;
     roomUbo.normalMat = glm::inverse(glm::transpose(IdentityModel));
 
-    // Map the shared matrix state out to all structural uniform slots
     DS_Floor.map(currentImage, &roomUbo, 0);
     DS_WallN.map(currentImage, &roomUbo, 0);
     DS_WallS.map(currentImage, &roomUbo, 0);
@@ -365,13 +366,6 @@ void SceneObjects::updateUBOs(int currentImage,
     tableCUbo.normalMat = glm::inverse(glm::transpose(tableCModel));
     DS_Table_C.map(currentImage, &tableCUbo, 0);
 
-    // ----- Floor -----
-    glm::mat4 floorModel = glm::mat4(1.0f);
-    UniformBufferObject floorUbo{};
-    floorUbo.modelMat  = floorModel;
-    floorUbo.mvpMat    = proj * view * floorModel;
-    floorUbo.normalMat = glm::inverse(glm::transpose(floorModel));
-    DS_Floor.map(currentImage, &floorUbo, 0);
 
     // ----- Fireplace -----
     constexpr float FIRE_SCALE    = 0.05f;
@@ -388,8 +382,8 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_Fire.map(currentImage, &fireUbo, 0);
 
     // ----- Bar -----
-    constexpr float BAR_SCALE    = 0.008f;
-    constexpr float BAR_Y_OFFSET = 1.5f;
+    constexpr float BAR_SCALE    = 0.007f;
+    constexpr float BAR_Y_OFFSET = 1.4f;
 
     glm::mat4 barModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, BAR_Y_OFFSET, 0.0f))
@@ -402,7 +396,7 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_Bar.map(currentImage, &barUbo, 0);
 
     // ----- Bar 2 -----
-    constexpr float BAR2_SCALE    = 0.8f;
+    constexpr float BAR2_SCALE    = 0.6f;
     constexpr float BAR2_Y_OFFSET = 0.0f;
 
     glm::mat4 bar2Model =
