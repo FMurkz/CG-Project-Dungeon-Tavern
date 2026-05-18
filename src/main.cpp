@@ -242,7 +242,13 @@ protected:
         proj[1][1] *= -1;
 
         // Update all object UBOs (transforms live in SceneObjects)
-        scene.updateUBOs(currentImage, proj, view, npcInteraction.hasInteracted());
+        scene.updateUBOs(
+            currentImage,
+            proj,
+            view,
+            npcInteraction.hasInteracted(),
+            cameraPos
+        );
 
         // Global UBO (lighting + camera)
         GlobalUniformBufferObject gubo{};

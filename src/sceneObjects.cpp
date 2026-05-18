@@ -1,4 +1,5 @@
 #include "sceneObjects.hpp"
+#include <cmath>
 
 void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     // Models: loaded from file
@@ -61,17 +62,33 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
 void SceneObjects::updateUBOs(int currentImage,
                               const glm::mat4& proj,
                               const glm::mat4& view,
-                              bool npcInteracted) {
+                              bool npcInteracted,
+                              const glm::vec3& playerPosition) {
     // ----- Character -----
     constexpr float CHAR_SCALE    = 0.01f;
     constexpr float CHAR_Y_OFFSET = 0.0f;
-    float npcRotation = npcInteracted ? glm::radians(180.0f) : 0.0f;
+    const glm::vec3 npcPosition = glm::vec3(0.0f, CHAR_Y_OFFSET, 0.0f);
+
+    float npcRotation = 0.0f;
+
+    if (npcInteracted) {
+        // Direction from NPC to player, only in the horizontal XZ-plane
+        glm::vec3 directionToPlayer = playerPosition - npcPosition;
+        directionToPlayer.y = 0.0f;
+
+        if (glm::length(directionToPlayer) > 0.0001f) {
+            directionToPlayer = glm::normalize(directionToPlayer);
+
+            // The model's default forward direction appears to be +Z,
+            // so this computes the yaw needed to face the player.
+            npcRotation = std::atan2(directionToPlayer.x, directionToPlayer.z);
+        }
+    }
 
     glm::mat4 charModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, CHAR_Y_OFFSET, 0.0f))
+          glm::translate(glm::mat4(1.0f), npcPosition)
         * glm::rotate   (glm::mat4(1.0f), npcRotation, glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(CHAR_SCALE));
-
     UniformBufferObject charUbo{};
     charUbo.modelMat  = charModel;
     charUbo.mvpMat    = proj * view * charModel;
