@@ -89,7 +89,7 @@ protected:
 
         DPSZs.uniformBlocksInPool = scene.count() + 1;
         DPSZs.setsInPool          = scene.count() + 1;
-        DPSZs.texturesInPool      = 2;
+        DPSZs.texturesInPool      = 7;
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
