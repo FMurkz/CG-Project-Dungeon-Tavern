@@ -50,12 +50,16 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
 
 void SceneObjects::updateUBOs(int currentImage,
                               const glm::mat4& proj,
-                              const glm::mat4& view) {
+                              const glm::mat4& view,
+                              bool npcInteracted) {
     // ----- Character -----
     constexpr float CHAR_SCALE    = 0.01f;
     constexpr float CHAR_Y_OFFSET = 0.0f;
+    float npcRotation = npcInteracted ? glm::radians(180.0f) : 0.0f;
+
     glm::mat4 charModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, CHAR_Y_OFFSET, 0.0f))
+        * glm::rotate   (glm::mat4(1.0f), npcRotation, glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(CHAR_SCALE));
 
     UniformBufferObject charUbo{};
