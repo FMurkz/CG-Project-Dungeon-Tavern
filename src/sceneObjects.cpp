@@ -22,6 +22,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar.init(bp, "assets/textures/BeerBar_Base_color_1001.png");
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
+    T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.png");
     T_Orc.init(bp, "assets/textures/Orc.png");
     T_Sitting.init(bp, "assets/textures/Sitting.png");
@@ -127,6 +128,80 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     //=====================================================
 }
 
+void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
+    collisionSystem.clear();
+    collisionSystem.setPlayerRadius(0.35f);
+
+    // ============================================================
+    // ROOM BOUNDS
+    // The camera/player is not allowed to leave the room.
+    // Room extends visually from -10 to +10 in X and Z.
+    // ============================================================
+    collisionSystem.setRoomBounds(
+        -10.0f, 10.0f,
+        -10.0f, 10.0f
+    );
+
+    // ============================================================
+    // NPCs
+    // ============================================================
+    collisionSystem.addCircleCollider(
+        glm::vec2(0.0f, 0.0f),
+        0.40f
+    );
+
+    collisionSystem.addCircleCollider(
+        glm::vec2(-2.0f, -2.0f),
+        0.40f
+    );
+
+    // ============================================================
+    // TABLES
+    // Positions match updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(-5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, 4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    // ============================================================
+    // FIREPLACE
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, -9.0f),
+        glm::vec2(1.60f, 0.60f)
+    );
+
+    // ============================================================
+    // CENTRAL BAR
+    // At the moment this is approximate and may need tuning
+    // after you test it visually.
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.00f, 3.00f)
+    );
+
+    // ============================================================
+    // SECOND BAR
+    // Bar2 is rotated 90 degrees in updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(-6.0f, 6.0f),
+        glm::vec2(1.50f, 2.50f),
+        glm::radians(90.0f)
+    );
+}
 
 void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object) {
     //Models
@@ -168,7 +243,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_WallW.cleanup();
     DS_Ceiling.cleanup();
     DS_Bar.cleanup();
-    DS_Bar2.cleanup();;
+    DS_Bar2.cleanup();
 }
 
 void SceneObjects::cleanupAll() {
@@ -470,7 +545,7 @@ void SceneObjects::updateUBOs(int currentImage,
 
     glm::mat4 bar2Model =
           glm::translate(glm::mat4(1.0f), glm::vec3(-6.0f, BAR2_Y_OFFSET, 6.0f))
-        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) // ⬇️ FIXED: Semicolon removed!
         * glm::scale    (glm::mat4(1.0f), glm::vec3(BAR2_SCALE));
 
     UniformBufferObject bar2Ubo{};

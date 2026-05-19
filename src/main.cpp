@@ -2,6 +2,7 @@
 #include "sceneObjects.hpp"
 #include "NPCInteraction.hpp"
 #include "DialogBox.hpp"
+#include "CollisionSystem.hpp"
 #include <chrono>
 #include <vector>
 
@@ -34,34 +35,38 @@ protected:
     // All scene objects
     SceneObjects scene;
 
+    // Collision handling
+    CollisionSystem collisionSystem;
+
+    // Dialog UI overlay
+    DialogBox dialogBox;
+
     // Global descriptor set
     DescriptorSet DS_Global;
 
     // Camera State
     float Ar = 0.0f;
     glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, 9.0f);
-    float camYaw   = glm::radians(180.0f);
+    float camYaw = glm::radians(180.0f);
     float camPitch = 0.0f;
 
     // --- NPC interactions ---
     // To add a new NPC: append one NPCInteractionDef to npcDefs in localInit().
-    // Everything else (dialog boxes, descriptor sets, draw calls) is handled
-    // automatically by the loops below.
     std::vector<NPCInteraction> npcs;
     std::vector<DialogBox>      npcDialogs;
     int activeNpcIndex      = -1;   // index of the currently open dialog, -1 = none
     int previousActiveIndex = -1;
 
     void setWindowParameters() {
-        windowWidth  = 800;
+        windowWidth = 800;
         windowHeight = 600;
-        windowTitle  = "Dungeon Tavern - Scene";
+        windowTitle = "Dungeon Tavern - Scene";
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.05f, 0.05f, 0.1f, 1.0f};
     }
 
     void onWindowResize(int w, int h) {
-        RP.width  = w;
+        RP.width = w;
         RP.height = h;
         Ar = (float)w / (float)h;
     }
@@ -76,12 +81,14 @@ protected:
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT,
              sizeof(UniformBufferObject), 1},
             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
-             0, 1}
+         0, 1}
         });
 
         DSL_UI.init(this, {
-            {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-             VK_SHADER_STAGE_FRAGMENT_BIT, 0, 1}
+        {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+         VK_SHADER_STAGE_FRAGMENT_BIT,
+         0,
+         1}
         });
 
         VD.init(this,
@@ -94,10 +101,17 @@ protected:
         );
 
         VD_UI.init(this,
-            {{0, sizeof(DialogVertex), VK_VERTEX_INPUT_RATE_VERTEX}},
-            {
-                {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(DialogVertex, pos), sizeof(glm::vec2), POS2D},
-                {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(DialogVertex, uv),  sizeof(glm::vec2), UV}
+    {{0, sizeof(DialogVertex), VK_VERTEX_INPUT_RATE_VERTEX}},
+    {
+        {0, 0, VK_FORMAT_R32G32_SFLOAT,
+         offsetof(DialogVertex, pos),
+         sizeof(glm::vec2),
+         POS2D},
+
+        {0, 1, VK_FORMAT_R32G32_SFLOAT,
+         offsetof(DialogVertex, uv),
+         sizeof(glm::vec2),
+         UV}
             }
         );
 
@@ -109,15 +123,16 @@ protected:
         P.setCullMode(VK_CULL_MODE_BACK_BIT);
 
         P_UI.init(this,
-            &VD_UI,
-            "shaders/dialogbox.vert.spv",
-            "shaders/dialogbox.frag.spv",
-            {&DSL_UI});
+          &VD_UI,
+          "shaders/dialogbox.vert.spv",
+          "shaders/dialogbox.frag.spv",
+          {&DSL_UI});
+
         P_UI.setCullMode(VK_CULL_MODE_NONE);
         P_UI.setTransparency(true);
 
         scene.loadAll(this, &VD);
-
+        scene.registerColliders(collisionSystem);
         // ---------------------------------------------------------------
         // Define every interactable NPC here.
         // To add a new NPC, append another NPCInteractionDef — nothing
@@ -162,6 +177,7 @@ protected:
     void pipelinesAndDescriptorSetsCleanup() {
         P.cleanup();
         RP.cleanup();
+
         P_UI.cleanup();
 
         DS_Global.cleanup();
@@ -178,6 +194,7 @@ protected:
             dlg.cleanup();
 
         RP.destroy();
+
         P.destroy();
         P_UI.destroy();
 
@@ -189,8 +206,8 @@ protected:
         VD_UI.cleanup();
     }
 
-    static void populateCommandBufferAccess(VkCommandBuffer cb, int img, void* p) {
-        ((DungeonTavern*)p)->populateCommandBuffer(cb, img);
+    static void populateCommandBufferAccess(VkCommandBuffer cb, int img, void *p) {
+        ((DungeonTavern *)p)->populateCommandBuffer(cb, img);
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -198,6 +215,7 @@ protected:
 
         // Draw 3D scene
         P.bind(commandBuffer);
+
         DS_Global.bind(commandBuffer, P, 0, currentImage);
         scene.drawAll(commandBuffer, P, currentImage);
 
@@ -219,7 +237,7 @@ protected:
         float deltaT = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
 
-        // Camera rotation
+        // Input
         constexpr float ROT_SPEED = glm::radians(90.0f);
         if (glfwGetKey(window, GLFW_KEY_D))    camYaw   -= ROT_SPEED * deltaT;
         if (glfwGetKey(window, GLFW_KEY_A))    camYaw   += ROT_SPEED * deltaT;
@@ -235,8 +253,8 @@ protected:
 
         glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
         constexpr float MOVE_SPEED = 3.0f;
-        if (glfwGetKey(window, GLFW_KEY_W)) cameraPos += walkDir * MOVE_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_S)) cameraPos -= walkDir * MOVE_SPEED * deltaT;
+
+        glm::vec3 movementDelta = glm::vec3(0.0f);
 
         // --- NPC interactions ---
         // Update every NPC and find which one (if any) has an open dialog.
@@ -250,8 +268,17 @@ protected:
                 newActive = i;
         }
         activeNpcIndex = newActive;
+        if (glfwGetKey(window, GLFW_KEY_W)) {
+            movementDelta += walkDir * MOVE_SPEED * deltaT;
+        }
 
-        // Re-record the command buffer only when the active dialog changes
+        if (glfwGetKey(window, GLFW_KEY_S)) {
+            movementDelta -= walkDir * MOVE_SPEED * deltaT;
+        }
+
+        cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
+        // NPC interaction
+
         if (activeNpcIndex != previousActiveIndex) {
             previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
