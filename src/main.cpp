@@ -1,8 +1,10 @@
+#define MINIAUDIO_IMPLEMENTATION
 #include "modules/Starter.hpp"
 #include "sceneObjects.hpp"
 #include "NPCInteraction.hpp"
 #include "DialogBox.hpp"
 #include "CollisionSystem.hpp"
+#include "miniaudio.h"
 #include <chrono>
 #include <vector>
 
@@ -27,6 +29,8 @@ struct GlobalUniformBufferObject {
 
 class DungeonTavern : public BaseProject {
 protected:
+    //Music
+    ma_engine audioEngine;
     // Layouts and Pipelines
     VertexDescriptor VD;
     VertexDescriptor VD_UI;
@@ -167,6 +171,9 @@ protected:
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
+
+        ma_engine_init(NULL, &audioEngine);
+        ma_engine_play_sound(&audioEngine, "assets/audio/tavern.mp3", NULL);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -210,6 +217,8 @@ protected:
 
         VD.cleanup();
         VD_UI.cleanup();
+
+        ma_engine_uninit(&audioEngine);
     }
 
     static void populateCommandBufferAccess(VkCommandBuffer cb, int img, void *p) {
