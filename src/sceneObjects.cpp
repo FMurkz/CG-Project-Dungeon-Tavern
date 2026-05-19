@@ -354,7 +354,8 @@ void SceneObjects::updateUBOs(int currentImage,
     constexpr float ORC_Y_OFFSET = 0.0f;  //
 
     glm::mat4 orcModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, ORC_Y_OFFSET, 3.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(-6.3f, ORC_Y_OFFSET, 7.3f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(ORC_SCALE));
 
     UniformBufferObject orcUbo{};
@@ -364,11 +365,12 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_Orc.map(currentImage, &orcUbo, 0);
 
     // ----- Sitting Character -----
-    constexpr float SITTING_SCALE    = 1.0f;
-    constexpr float SITTING_Y_OFFSET = 0.55f; //
+    constexpr float SITTING_SCALE    = 1.4f;
+    constexpr float SITTING_Y_OFFSET = 0.0f; //
 
     glm::mat4 sittingModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, SITTING_Y_OFFSET, 4.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(3.65f, SITTING_Y_OFFSET, 3.0f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(SITTING_SCALE));
 
     UniformBufferObject sittingUbo{};
@@ -379,7 +381,6 @@ void SceneObjects::updateUBOs(int currentImage,
 
     // ----- TABLES
     constexpr float TABLE_SCALE    = 0.013f;
-
     constexpr float TABLE_Y_OFFSET = 0.0f;
 
     // ----- Table A -----
@@ -450,7 +451,7 @@ void SceneObjects::updateUBOs(int currentImage,
 
     glm::mat4 bar2Model =
           glm::translate(glm::mat4(1.0f), glm::vec3(-6.0f, BAR2_Y_OFFSET, 6.0f))
-        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) // ⬇️ FIXED: Semicolon removed!
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(BAR2_SCALE));
 
     UniformBufferObject bar2Ubo{};
