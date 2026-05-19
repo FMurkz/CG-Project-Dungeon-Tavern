@@ -4,6 +4,7 @@
 #include "DialogBox.hpp"
 #include "CollisionSystem.hpp"
 #include <chrono>
+#include <vector>
 
 struct Vertex {
     glm::vec3 pos;
@@ -49,12 +50,12 @@ protected:
     float camYaw = glm::radians(180.0f);
     float camPitch = 0.0f;
 
-    // NPC interaction state
-    NPCInteraction npcInteraction{
-        glm::vec3(0.0f, 0.0f, 0.0f),
-        2.0f
-    };
-    bool previousDialogState = false;
+    // --- NPC interactions ---
+    // To add a new NPC: append one NPCInteractionDef to npcDefs in localInit().
+    std::vector<NPCInteraction> npcs;
+    std::vector<DialogBox>      npcDialogs;
+    int activeNpcIndex      = -1;   // index of the currently open dialog, -1 = none
+    int previousActiveIndex = -1;
 
     void setWindowParameters() {
         windowWidth = 800;
@@ -132,13 +133,29 @@ protected:
 
         scene.loadAll(this, &VD);
         scene.registerColliders(collisionSystem);
-        dialogBox.init(this, &VD_UI);
+        // ---------------------------------------------------------------
+        // Define every interactable NPC here.
+        // To add a new NPC, append another NPCInteractionDef — nothing
+        // else in this file needs to change.
+        // ---------------------------------------------------------------
+        std::vector<NPCInteractionDef> npcDefs = {
+            { glm::vec3( 2.0f, 0.0f,  2.0f), 3.0f, "assets/ui/innkeeper_dialog.png" },
+            { glm::vec3(-6.3f, 0.0f,  7.3f), 3.0f, "assets/ui/orc_dialog.png"       },
+            // { glm::vec3( 5.0f, 0.0f, -2.0f), 2.0f, "assets/ui/merchant_dialog.png" },
+        };
+
+        for (auto& def : npcDefs) {
+            npcs.emplace_back(def);
+            npcDialogs.emplace_back();
+            npcDialogs.back().init(this, &VD_UI, def.dialogTexturePath);
+        }
+        // ---------------------------------------------------------------
 
         int sceneTextures = scene.count();
-        int uiTextures    = 1;
+        int uiTextures    = static_cast<int>(npcDialogs.size());
         DPSZs.texturesInPool      = sceneTextures + uiTextures;
-        DPSZs.uniformBlocksInPool = scene.count() + 1;   // objects + global
-        DPSZs.setsInPool          = scene.count() + 2;   // objects + global + UI
+        DPSZs.uniformBlocksInPool = scene.count() + 1;           // objects + global
+        DPSZs.setsInPool          = scene.count() + 1 + uiTextures; // objects + global + UI dialogs
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
@@ -152,7 +169,9 @@ protected:
 
         DS_Global.init(this, &DSL_Global, {});
         scene.initDescriptorSets(this, &DSL_Object);
-        dialogBox.initDescriptorSet(this, &DSL_UI);
+
+        for (auto& dlg : npcDialogs)
+            dlg.initDescriptorSet(this, &DSL_UI);
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -163,12 +182,16 @@ protected:
 
         DS_Global.cleanup();
         scene.cleanupDescriptorSets();
-        dialogBox.cleanupDescriptorSet();
+
+        for (auto& dlg : npcDialogs)
+            dlg.cleanupDescriptorSet();
     }
 
     void localCleanup() {
         scene.cleanupAll();
-        dialogBox.cleanup();
+
+        for (auto& dlg : npcDialogs)
+            dlg.cleanup();
 
         RP.destroy();
 
@@ -196,10 +219,10 @@ protected:
         DS_Global.bind(commandBuffer, P, 0, currentImage);
         scene.drawAll(commandBuffer, P, currentImage);
 
-        // Draw dialog box overlay only when interaction is active
-        if (npcInteraction.hasInteracted()) {
+        // Draw whichever dialog box is currently active (if any)
+        if (activeNpcIndex >= 0) {
             P_UI.bind(commandBuffer);
-            dialogBox.draw(commandBuffer, P_UI, currentImage);
+            npcDialogs[activeNpcIndex].draw(commandBuffer, P_UI, currentImage);
         }
 
         RP.end(commandBuffer);
@@ -233,6 +256,18 @@ protected:
 
         glm::vec3 movementDelta = glm::vec3(0.0f);
 
+        // --- NPC interactions ---
+        // Update every NPC and find which one (if any) has an open dialog.
+        // Only one dialog can be open at a time: once we find an active NPC
+        // we skip updating the rest so their E-press edge-detection stays clean.
+        int newActive = -1;
+        for (int i = 0; i < static_cast<int>(npcs.size()); i++) {
+            if (newActive == -1)
+                npcs[i].update(window, cameraPos);
+            if (npcs[i].hasInteracted())
+                newActive = i;
+        }
+        activeNpcIndex = newActive;
         if (glfwGetKey(window, GLFW_KEY_W)) {
             movementDelta += walkDir * MOVE_SPEED * deltaT;
         }
@@ -243,14 +278,9 @@ protected:
 
         cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
         // NPC interaction
-        npcInteraction.update(window, cameraPos);
 
-        bool currentDialogState = npcInteraction.hasInteracted();
-
-        if (currentDialogState != previousDialogState) {
-            previousDialogState = currentDialogState;
-
-            // Re-record the command buffer so that the dialog box draw call is added or removed
+        if (activeNpcIndex != previousActiveIndex) {
+            previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
         }
 
@@ -264,7 +294,7 @@ protected:
             currentImage,
             proj,
             view,
-            npcInteraction.hasInteracted(),
+            activeNpcIndex,
             cameraPos
         );
 

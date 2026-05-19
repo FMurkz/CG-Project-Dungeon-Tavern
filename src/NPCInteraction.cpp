@@ -1,39 +1,34 @@
 #include "NPCInteraction.hpp"
 
-NPCInteraction::NPCInteraction(glm::vec3 position, float distance)
-    : npcPosition(position),
-      interactionDistance(distance),
-      interacted(false),
-      eWasPressed(false),
-      playerIsNearNpc(false){}
+NPCInteraction::NPCInteraction(const NPCInteractionDef& def)
+    : def(def) {}
 
 void NPCInteraction::update(GLFWwindow* window, const glm::vec3& playerPosition) {
     glm::vec2 playerXZ = glm::vec2(playerPosition.x, playerPosition.z);
-    glm::vec2 npcXZ    = glm::vec2(npcPosition.x, npcPosition.z);
+    glm::vec2 npcXZ    = glm::vec2(def.position.x,   def.position.z);
 
-    float distanceToNpc = glm::distance(playerXZ, npcXZ);
-    playerIsNearNpc = distanceToNpc < interactionDistance;
+    playerIsNear = glm::distance(playerXZ, npcXZ) < def.interactionDistance;
+    bool ePressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
 
-    bool eIsPressed = glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS;
-
-    // Open/close dialogue when pressing E near the NPC
-    if (playerIsNearNpc && eIsPressed && !eWasPressed) {
+    // Toggle dialog open/closed on a fresh E press while nearby
+    if (playerIsNear && ePressed && !eWasPressed)
         interacted = !interacted;
-    }
 
-    // If the player walks away, close the dialogue automatically
-    // and return the NPC to the original state.
-    if (!playerIsNearNpc) {
+    // Auto-close when the player walks away
+    if (!playerIsNear)
         interacted = false;
-    }
 
-    eWasPressed = eIsPressed;
+    eWasPressed = ePressed;
 }
 
 bool NPCInteraction::hasInteracted() const {
     return interacted;
 }
 
-bool NPCInteraction::isPlayerNearNpc() const {
-    return playerIsNearNpc;
+bool NPCInteraction::isPlayerNear() const {
+    return playerIsNear;
+}
+
+const std::string& NPCInteraction::getDialogTexturePath() const {
+    return def.dialogTexturePath;
 }
