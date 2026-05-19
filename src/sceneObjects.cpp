@@ -123,6 +123,80 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     //=====================================================
 }
 
+void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
+    collisionSystem.clear();
+    collisionSystem.setPlayerRadius(0.35f);
+
+    // ============================================================
+    // ROOM BOUNDS
+    // The camera/player is not allowed to leave the room.
+    // Room extends visually from -10 to +10 in X and Z.
+    // ============================================================
+    collisionSystem.setRoomBounds(
+        -10.0f, 10.0f,
+        -10.0f, 10.0f
+    );
+
+    // ============================================================
+    // NPCs
+    // ============================================================
+    collisionSystem.addCircleCollider(
+        glm::vec2(0.0f, 0.0f),
+        0.40f
+    );
+
+    collisionSystem.addCircleCollider(
+        glm::vec2(-2.0f, -2.0f),
+        0.40f
+    );
+
+    // ============================================================
+    // TABLES
+    // Positions match updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(-5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, 4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    // ============================================================
+    // FIREPLACE
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, -9.0f),
+        glm::vec2(1.60f, 0.60f)
+    );
+
+    // ============================================================
+    // CENTRAL BAR
+    // At the moment this is approximate and may need tuning
+    // after you test it visually.
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.00f, 3.00f)
+    );
+
+    // ============================================================
+    // SECOND BAR
+    // Bar2 is rotated 90 degrees in updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(-6.0f, 6.0f),
+        glm::vec2(1.50f, 2.50f),
+        glm::radians(90.0f)
+    );
+}
 
 void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object) {
     //Models
