@@ -198,7 +198,7 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // ============================================================
     collisionSystem.addBoxCollider(
         glm::vec2(-6.0f, 6.0f),
-        glm::vec2(1.50f, 2.50f),
+        glm::vec2(1.00f, 1.80f),
         glm::radians(90.0f)
     );
 }
@@ -365,7 +365,7 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
 void SceneObjects::updateUBOs(int currentImage,
                               const glm::mat4& proj,
                               const glm::mat4& view,
-                              bool npcInteracted,
+                              int activeNpcIndex,
                               const glm::vec3& playerPosition) {
     // ----- Character -----
     constexpr float CHAR_SCALE    = 0.01f;
@@ -374,7 +374,7 @@ void SceneObjects::updateUBOs(int currentImage,
 
     float npcRotation = 0.0f;
 
-    if (npcInteracted) {
+    if (activeNpcIndex == 0) {
         // Direction from NPC to player, only in the horizontal XZ-plane
         glm::vec3 directionToPlayer = playerPosition - npcPosition;
         directionToPlayer.y = 0.0f;
@@ -432,7 +432,7 @@ void SceneObjects::updateUBOs(int currentImage,
     // Calculate dynamic rotation for Orc
     float orcRotation = glm::radians(180.0f); // Default resting rotation angle
 
-    if (npcInteracted) {
+    if (activeNpcIndex == 1) {
         // Direction from Orc to player, horizontal XZ-plane
         glm::vec3 orcDirectionToPlayer = playerPosition - orcPosition;
         orcDirectionToPlayer.y = 0.0f;

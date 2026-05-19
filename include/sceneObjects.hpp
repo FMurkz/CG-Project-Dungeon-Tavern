@@ -82,7 +82,11 @@ struct SceneObjects {
 
     // Update every object's UBO with its transform. Call from
     // updateUniformBuffer(). proj and view come from main's camera.
-    void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted, const glm::vec3& playerPosition);
+    void updateUBOs(int currentImage,
+                 const glm::mat4& proj,
+                 const glm::mat4& view,
+                 int activeNpcIndex,
+                 const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
     int count() const { return 16; }  //

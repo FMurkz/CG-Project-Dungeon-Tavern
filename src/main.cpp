@@ -294,7 +294,7 @@ protected:
             currentImage,
             proj,
             view,
-            activeNpcIndex >= 0,   // true when any dialog is open
+            activeNpcIndex,
             cameraPos
         );
 

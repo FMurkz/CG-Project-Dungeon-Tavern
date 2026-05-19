@@ -16,6 +16,7 @@ private:
     NPCInteractionDef def;
     bool interacted  = false;
     bool eWasPressed = false;
+    bool playerIsNear = false;
 
 public:
     explicit NPCInteraction(const NPCInteractionDef& def);
