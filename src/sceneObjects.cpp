@@ -20,7 +20,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar.init(bp, "assets/textures/BeerBar_Base_color_1001.png");
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
-    T_Ceiling.init(bp, "assets/textures/ceiling.png");
+    T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
     //============================================================
 
     //==========================================================================
