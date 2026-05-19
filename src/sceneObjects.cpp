@@ -339,11 +339,11 @@ void SceneObjects::updateUBOs(int currentImage,
     char2Ubo.normalMat = glm::inverse(glm::transpose(char2Model));
     DS_Character2.map(currentImage, &char2Ubo, 0);
     // ----- Orc -----
-    constexpr float ORC_SCALE    = 20.3f; //
+    constexpr float ORC_SCALE    = 0.02f; //
     constexpr float ORC_Y_OFFSET = 0.0f;  //
 
     glm::mat4 orcModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, ORC_Y_OFFSET, 2.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, ORC_Y_OFFSET, 3.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(ORC_SCALE));
 
     UniformBufferObject orcUbo{};
