@@ -23,7 +23,6 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
-    T_Ceiling.init(bp, "assets/textures/ceiling.png");
     T_Orc.init(bp, "assets/textures/Orc.png");
     T_Sitting.init(bp, "assets/textures/Sitting.png");
     //============================================================
