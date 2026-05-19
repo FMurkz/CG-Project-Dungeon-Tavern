@@ -1,6 +1,7 @@
 #pragma once
 
 #include "modules/Starter.hpp"
+#include "CollisionSystem.hpp"
 
 // Vertex must match the layout in main.cpp.
 struct SceneVertex {
@@ -27,6 +28,9 @@ struct SceneObjects {
     Model M_Bar;
     Model M_Bar2;
     Model M_Torch;
+    Model M_Orc;
+    Model M_Sitting;
+
 
     // ---- Textures ----
     Texture T_Character;
@@ -36,6 +40,8 @@ struct SceneObjects {
     Texture T_Bar;
     Texture T_Bar2;
     Texture T_Torch;
+    Texture T_Orc;
+    Texture T_Sitting;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
@@ -46,6 +52,8 @@ struct SceneObjects {
     DescriptorSet DS_Fire;
     DescriptorSet DS_Bar;
     DescriptorSet DS_Bar2;
+    DescriptorSet DS_Orc;
+    DescriptorSet DS_Sitting;
 
     std::vector<DescriptorSet> DS_Torches;
     //Torch positions
@@ -62,6 +70,9 @@ struct SceneObjects {
     // Load all models. Call from localInit().
     void loadAll(BaseProject* bp, VertexDescriptor* VD);
 
+    // Register colliders for all solid scene objects.
+    void registerColliders(CollisionSystem& collisionSystem) const;
+
     // Create descriptor sets. Call from pipelinesAndDescriptorSetsInit().
     void initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object);
 
@@ -76,8 +87,12 @@ struct SceneObjects {
 
     // Update every object's UBO with its transform. Call from
     // updateUniformBuffer(). proj and view come from main's camera.
-    void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted, const glm::vec3& playerPosition);
+    void updateUBOs(int currentImage,
+                 const glm::mat4& proj,
+                 const glm::mat4& view,
+                 int activeNpcIndex,
+                 const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 18; }  //
+    int count() const { return 20; }  //
 };

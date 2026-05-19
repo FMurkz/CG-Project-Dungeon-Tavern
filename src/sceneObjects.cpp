@@ -11,6 +11,8 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Bar.init(bp, VD, "assets/models/bar.obj", OBJ);
     M_Bar2.init(bp, VD, "assets/models/bar2.obj", OBJ);
     M_Torch.init(bp, VD, "assets/models/torch.obj", OBJ);
+    M_Orc.init(bp, VD, "assets/models/orc.obj", OBJ);
+    M_Sitting.init(bp, VD, "assets/models/sitting.obj", OBJ);
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
@@ -21,8 +23,10 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar.init(bp, "assets/textures/BeerBar_Base_color_1001.png");
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
-    T_Ceiling.init(bp, "assets/textures/ceiling.png");
     T_Torch.init(bp, "assets/textures/torchColor.png");
+    T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
+    T_Orc.init(bp, "assets/textures/Orc.png");
+    T_Sitting.init(bp, "assets/textures/Sitting.png");
     //============================================================
 
     constexpr float ROOM_HALF_T = 10.0f;
@@ -134,6 +138,80 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     //=====================================================
 }
 
+void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
+    collisionSystem.clear();
+    collisionSystem.setPlayerRadius(0.35f);
+
+    // ============================================================
+    // ROOM BOUNDS
+    // The camera/player is not allowed to leave the room.
+    // Room extends visually from -10 to +10 in X and Z.
+    // ============================================================
+    collisionSystem.setRoomBounds(
+        -10.0f, 10.0f,
+        -10.0f, 10.0f
+    );
+
+    // ============================================================
+    // NPCs
+    // ============================================================
+    collisionSystem.addCircleCollider(
+        glm::vec2(0.0f, 0.0f),
+        0.40f
+    );
+
+    collisionSystem.addCircleCollider(
+        glm::vec2(-2.0f, -2.0f),
+        0.40f
+    );
+
+    // ============================================================
+    // TABLES
+    // Positions match updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(-5.0f, -4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    collisionSystem.addBoxCollider(
+        glm::vec2(5.0f, 4.0f),
+        glm::vec2(2.00f, 2.00f)
+    );
+
+    // ============================================================
+    // FIREPLACE
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, -9.0f),
+        glm::vec2(1.60f, 0.60f)
+    );
+
+    // ============================================================
+    // CENTRAL BAR
+    // At the moment this is approximate and may need tuning
+    // after you test it visually.
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(1.00f, 3.00f)
+    );
+
+    // ============================================================
+    // SECOND BAR
+    // Bar2 is rotated 90 degrees in updateUBOs()
+    // ============================================================
+    collisionSystem.addBoxCollider(
+        glm::vec2(-6.0f, 6.0f),
+        glm::vec2(1.00f, 1.80f),
+        glm::radians(90.0f)
+    );
+}
 
 void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object) {
     //Models
@@ -145,6 +223,8 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_Fire.init(bp, DSL_Object, { T_Fire.getViewAndSampler() });
     DS_Bar.init(bp, DSL_Object, { T_Bar.getViewAndSampler() });
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
+    DS_Orc.init(bp, DSL_Object, { T_Orc.getViewAndSampler() });
+    DS_Sitting.init(bp, DSL_Object, { T_Sitting.getViewAndSampler() });
     //Room
     DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -168,6 +248,8 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Table_C.cleanup();
     DS_Fire.cleanup();
     DS_Floor.cleanup();
+    DS_Orc.cleanup();
+    DS_Sitting.cleanup();
     for (auto& ds : DS_Torches) ds.cleanup();
     DS_Torches.clear();
 
@@ -189,8 +271,8 @@ void SceneObjects::cleanupAll() {
     M_Fire.cleanup();
     M_Bar.cleanup();
     M_Bar2.cleanup();
-
-    //Room
+    M_Orc.cleanup();
+    M_Sitting.cleanup();
     M_Torch.cleanup();
 
     //Room
@@ -213,6 +295,8 @@ void SceneObjects::cleanupAll() {
     T_Wall.cleanup();
     T_Ceiling.cleanup();
     T_Torch.cleanup();
+    T_Orc.cleanup();
+    T_Sitting.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
@@ -226,6 +310,11 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Character2.bind(cb);
     vkCmdDrawIndexed(cb,
         static_cast<uint32_t>(M_Character2.indices.size()), 1, 0, 0, 0);
+    // Sitting Character
+    DS_Sitting.bind(cb, P, 1, currentImage);
+    M_Sitting.bind(cb);
+    vkCmdDrawIndexed(cb,
+        static_cast<uint32_t>(M_Sitting.indices.size()), 1, 0, 0, 0);
     // Table A
     DS_Table_A.bind(cb, P, 1, currentImage);
     M_Table.bind(cb);
@@ -261,6 +350,11 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     DS_Bar2.bind(cb, P, 1, currentImage);
     M_Bar2.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Bar2.indices.size()), 1, 0, 0, 0);
+    // Orc
+    DS_Orc.bind(cb, P, 1, currentImage);
+    M_Orc.bind(cb);
+    vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Orc.indices.size()), 1, 0, 0, 0);
+
 
     //====================================================================
     //                          ROOM
@@ -296,16 +390,16 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
 void SceneObjects::updateUBOs(int currentImage,
                               const glm::mat4& proj,
                               const glm::mat4& view,
-                              bool npcInteracted,
+                              int activeNpcIndex,
                               const glm::vec3& playerPosition) {
     // ----- Character -----
     constexpr float CHAR_SCALE    = 0.01f;
     constexpr float CHAR_Y_OFFSET = 0.0f;
-    const glm::vec3 npcPosition = glm::vec3(0.0f, CHAR_Y_OFFSET, 0.0f);
+    const glm::vec3 npcPosition = glm::vec3(2.0f, CHAR_Y_OFFSET, 2.0f);
 
     float npcRotation = 0.0f;
 
-    if (npcInteracted) {
+    if (activeNpcIndex == 0) {
         // Direction from NPC to player, only in the horizontal XZ-plane
         glm::vec3 directionToPlayer = playerPosition - npcPosition;
         directionToPlayer.y = 0.0f;
@@ -369,10 +463,57 @@ void SceneObjects::updateUBOs(int currentImage,
     char2Ubo.mvpMat    = proj * view * char2Model;
     char2Ubo.normalMat = glm::inverse(glm::transpose(char2Model));
     DS_Character2.map(currentImage, &char2Ubo, 0);
+    // ----- Orc -----
+    constexpr float ORC_SCALE    = 1.0f;
+    constexpr float ORC_Y_OFFSET = 0.0f;
+    const glm::vec3 orcPosition  = glm::vec3(-6.3f, ORC_Y_OFFSET, 7.3f); // Extracted variable
+
+    // Calculate dynamic rotation for Orc
+    float orcRotation = glm::radians(180.0f); // Default resting rotation angle
+
+    if (activeNpcIndex == 1) {
+        // Direction from Orc to player, horizontal XZ-plane
+        glm::vec3 orcDirectionToPlayer = playerPosition - orcPosition;
+        orcDirectionToPlayer.y = 0.0f;
+
+        if (glm::length(orcDirectionToPlayer) > 0.0001f) {
+            orcDirectionToPlayer = glm::normalize(orcDirectionToPlayer);
+
+            // Computes yaw to face player.
+            // Note: If his model maps facing a different way natively,
+            // you can add or subtract an offset like `+ glm::radians(180.0f)` here.
+            orcRotation = std::atan2(orcDirectionToPlayer.x, orcDirectionToPlayer.z);
+        }
+    }
+
+    glm::mat4 orcModel =
+          glm::translate(glm::mat4(1.0f), orcPosition)
+        * glm::rotate   (glm::mat4(1.0f), orcRotation, glm::vec3(0.0f, 1.0f, 0.0f)) // Dynamic rotation bound!
+        * glm::scale    (glm::mat4(1.0f), glm::vec3(ORC_SCALE));
+
+    UniformBufferObject orcUbo{};
+    orcUbo.modelMat  = orcModel;
+    orcUbo.mvpMat    = proj * view * orcModel;
+    orcUbo.normalMat = glm::inverse(glm::transpose(orcModel));
+    DS_Orc.map(currentImage, &orcUbo, 0);
+
+    // ----- Sitting Character -----
+    constexpr float SITTING_SCALE    = 1.4f;
+    constexpr float SITTING_Y_OFFSET = 0.0f; //
+
+    glm::mat4 sittingModel =
+          glm::translate(glm::mat4(1.0f), glm::vec3(3.65f, SITTING_Y_OFFSET, 3.0f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+        * glm::scale    (glm::mat4(1.0f), glm::vec3(SITTING_SCALE));
+
+    UniformBufferObject sittingUbo{};
+    sittingUbo.modelMat  = sittingModel;
+    sittingUbo.mvpMat    = proj * view * sittingModel;
+    sittingUbo.normalMat = glm::inverse(glm::transpose(sittingModel));
+    DS_Sitting.map(currentImage, &sittingUbo, 0);
 
     // ----- TABLES
     constexpr float TABLE_SCALE    = 0.013f;
-
     constexpr float TABLE_Y_OFFSET = 0.0f;
 
     // ----- Table A -----

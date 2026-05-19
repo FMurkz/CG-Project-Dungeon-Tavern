@@ -1,21 +1,31 @@
 #pragma once
 
 #include "modules/Starter.hpp"
+#include <string>
+
+// Describes one interactable NPC in the world.
+// Fill one of these per NPC and pass it to NPCInteraction's constructor.
+struct NPCInteractionDef {
+    glm::vec3   position;
+    float       interactionDistance;
+    std::string dialogTexturePath;   // e.g. "assets/ui/innkeeper_dialog.png"
+};
 
 class NPCInteraction {
 private:
-    glm::vec3 npcPosition;
-    float interactionDistance;
-    bool interacted;
-    bool eWasPressed;
-    bool playerIsNearNpc;
+    NPCInteractionDef def;
+    bool interacted  = false;
+    bool eWasPressed = false;
+    bool playerIsNear = false;
 
 public:
-    NPCInteraction(glm::vec3 position, float distance);
+    explicit NPCInteraction(const NPCInteractionDef& def);
 
+    // Call every frame with the current window and player world-position.
     void update(GLFWwindow* window, const glm::vec3& playerPosition);
 
     bool hasInteracted() const;
+    bool isPlayerNear()  const;
 
-    bool isPlayerNearNpc() const;
+    const std::string& getDialogTexturePath() const;
 };

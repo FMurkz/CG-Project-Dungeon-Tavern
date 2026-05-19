@@ -11,7 +11,10 @@ add_executable(${PROJECT_NAME} ${SRC_FILES}
         include/NPCInteraction.hpp
         src/NPCInteraction.cpp
         include/DialogBox.hpp
-        src/DialogBox.cpp)
+        src/DialogBox.cpp
+        src/CollisionSystem.cpp
+        include/CollisionSystem.hpp
+)
 target_include_directories(${PROJECT_NAME} PRIVATE "${MAIN_DIR}/include")
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 
