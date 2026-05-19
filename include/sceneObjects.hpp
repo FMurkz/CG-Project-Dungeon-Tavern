@@ -21,16 +21,33 @@ struct SceneObjects {
     //Characters and objects
     // ---- Models ----
     Model M_Character;
+    Model M_Character2;
+    Model M_Table;
+    Model M_Fire;
+    Model M_Bar;
+    Model M_Bar2;
     Model M_Torch;
 
     // ---- Textures ----
     Texture T_Character;
+    Texture T_Character2;
+    Texture T_Table;
+    Texture T_Fire;
+    Texture T_Bar;
+    Texture T_Bar2;
     Texture T_Torch;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
-    std::vector<DescriptorSet> DS_Torches;
+    DescriptorSet DS_Character2;
+    DescriptorSet DS_Table_A;
+    DescriptorSet DS_Table_B;
+    DescriptorSet DS_Table_C;
+    DescriptorSet DS_Fire;
+    DescriptorSet DS_Bar;
+    DescriptorSet DS_Bar2;
 
+    std::vector<DescriptorSet> DS_Torches;
     //Torch positions
     std::vector<glm::vec3>     torchPositions;
     std::vector<float>         torchYaws;
@@ -62,5 +79,5 @@ struct SceneObjects {
     void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted, const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 11 + static_cast<int>(torchPositions.size()); }  // character + floor + 4 walls + Ceiling
+    int count() const { return 18; }  //
 };

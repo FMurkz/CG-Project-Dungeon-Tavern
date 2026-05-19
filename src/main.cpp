@@ -29,6 +29,7 @@ protected:
     RenderPass RP;
     Pipeline P;
     Pipeline P_UI;
+    Pipeline P_Torch;
 
     // All scene objects
     SceneObjects scene;
@@ -41,8 +42,8 @@ protected:
 
     // Camera State
     float Ar = 0.0f;
-    glm::vec3 cameraPos = glm::vec3(0.0f, 1.5f, -3.5f);
-    float camYaw = 0.0f;
+    glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, 9.0f);
+    float camYaw = glm::radians(180.0f);
     float camPitch = 0.0f;
 
     // NPC interaction state
