@@ -11,6 +11,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Bar.init(bp, VD, "assets/models/bar.obj", OBJ);
     M_Bar2.init(bp, VD, "assets/models/bar2.obj", OBJ);
     M_Orc.init(bp, VD, "assets/models/orc.obj", OBJ);
+    M_Sitting.init(bp, VD, "assets/models/sitting.obj", OBJ);
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
@@ -22,7 +23,8 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.png");
-    T_Orc.init(bp, "assets/textures/character1.png");
+    T_Orc.init(bp, "assets/textures/Orc.png");
+    T_Sitting.init(bp, "assets/textures/Sitting.png");
     //============================================================
 
     //==========================================================================
@@ -137,6 +139,7 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_Bar.init(bp, DSL_Object, { T_Bar.getViewAndSampler() });
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
     DS_Orc.init(bp, DSL_Object, { T_Orc.getViewAndSampler() });
+    DS_Sitting.init(bp, DSL_Object, { T_Sitting.getViewAndSampler() });
     //Room
     DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -156,6 +159,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Fire.cleanup();
     DS_Floor.cleanup();
     DS_Orc.cleanup();
+    DS_Sitting.cleanup();
 
     //Room
     DS_WallN.cleanup();
@@ -164,7 +168,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_WallW.cleanup();
     DS_Ceiling.cleanup();
     DS_Bar.cleanup();
-    DS_Bar2.cleanup();
+    DS_Bar2.cleanup();;
 }
 
 void SceneObjects::cleanupAll() {
@@ -176,6 +180,7 @@ void SceneObjects::cleanupAll() {
     M_Bar.cleanup();
     M_Bar2.cleanup();
     M_Orc.cleanup();
+    M_Sitting.cleanup();
 
     //Room
     M_Floor.cleanup();
@@ -197,6 +202,7 @@ void SceneObjects::cleanupAll() {
     T_Wall.cleanup();
     T_Ceiling.cleanup();
     T_Orc.cleanup();
+    T_Sitting.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
@@ -210,6 +216,11 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Character2.bind(cb);
     vkCmdDrawIndexed(cb,
         static_cast<uint32_t>(M_Character2.indices.size()), 1, 0, 0, 0);
+    // Sitting Character
+    DS_Sitting.bind(cb, P, 1, currentImage);
+    M_Sitting.bind(cb);
+    vkCmdDrawIndexed(cb,
+        static_cast<uint32_t>(M_Sitting.indices.size()), 1, 0, 0, 0);
     // Table A
     DS_Table_A.bind(cb, P, 1, currentImage);
     M_Table.bind(cb);
@@ -339,7 +350,7 @@ void SceneObjects::updateUBOs(int currentImage,
     char2Ubo.normalMat = glm::inverse(glm::transpose(char2Model));
     DS_Character2.map(currentImage, &char2Ubo, 0);
     // ----- Orc -----
-    constexpr float ORC_SCALE    = 0.02f; //
+    constexpr float ORC_SCALE    = 1.0; //
     constexpr float ORC_Y_OFFSET = 0.0f;  //
 
     glm::mat4 orcModel =
@@ -351,6 +362,20 @@ void SceneObjects::updateUBOs(int currentImage,
     orcUbo.mvpMat    = proj * view * orcModel;
     orcUbo.normalMat = glm::inverse(glm::transpose(orcModel));
     DS_Orc.map(currentImage, &orcUbo, 0);
+
+    // ----- Sitting Character -----
+    constexpr float SITTING_SCALE    = 1.0f;
+    constexpr float SITTING_Y_OFFSET = 0.55f; //
+
+    glm::mat4 sittingModel =
+          glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, SITTING_Y_OFFSET, 4.0f))
+        * glm::scale    (glm::mat4(1.0f), glm::vec3(SITTING_SCALE));
+
+    UniformBufferObject sittingUbo{};
+    sittingUbo.modelMat  = sittingModel;
+    sittingUbo.mvpMat    = proj * view * sittingModel;
+    sittingUbo.normalMat = glm::inverse(glm::transpose(sittingModel));
+    DS_Sitting.map(currentImage, &sittingUbo, 0);
 
     // ----- TABLES
     constexpr float TABLE_SCALE    = 0.013f;
