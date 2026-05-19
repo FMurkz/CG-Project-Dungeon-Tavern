@@ -2,6 +2,7 @@
 #include "sceneObjects.hpp"
 #include "NPCInteraction.hpp"
 #include "DialogBox.hpp"
+#include "CollisionSystem.hpp"
 #include <chrono>
 
 struct Vertex {
@@ -32,6 +33,9 @@ protected:
 
     // All scene objects
     SceneObjects scene;
+
+    // Collision handling
+    CollisionSystem collisionSystem;
 
     // Dialog UI overlay
     DialogBox dialogBox;
@@ -127,6 +131,7 @@ protected:
         P_UI.setTransparency(true);
 
         scene.loadAll(this, &VD);
+        scene.registerColliders(collisionSystem);
         dialogBox.init(this, &VD_UI);
 
         int sceneTextures = scene.count();
@@ -225,9 +230,18 @@ protected:
 
         glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
         constexpr float MOVE_SPEED = 3.0f;
-        if (glfwGetKey(window, GLFW_KEY_W)) cameraPos += walkDir * MOVE_SPEED * deltaT;
-        if (glfwGetKey(window, GLFW_KEY_S)) cameraPos -= walkDir * MOVE_SPEED * deltaT;
 
+        glm::vec3 movementDelta = glm::vec3(0.0f);
+
+        if (glfwGetKey(window, GLFW_KEY_W)) {
+            movementDelta += walkDir * MOVE_SPEED * deltaT;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S)) {
+            movementDelta -= walkDir * MOVE_SPEED * deltaT;
+        }
+
+        cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
         // NPC interaction
         npcInteraction.update(window, cameraPos);
 

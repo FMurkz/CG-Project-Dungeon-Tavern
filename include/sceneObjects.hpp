@@ -1,6 +1,7 @@
 #pragma once
 
 #include "modules/Starter.hpp"
+#include "CollisionSystem.hpp"
 
 // Vertex must match the layout in main.cpp.
 struct SceneVertex {
@@ -57,6 +58,9 @@ struct SceneObjects {
 
     // Load all models. Call from localInit().
     void loadAll(BaseProject* bp, VertexDescriptor* VD);
+
+    // Register colliders for all solid scene objects.
+    void registerColliders(CollisionSystem& collisionSystem) const;
 
     // Create descriptor sets. Call from pipelinesAndDescriptorSetsInit().
     void initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object);
