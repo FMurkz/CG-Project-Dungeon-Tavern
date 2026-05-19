@@ -27,6 +27,7 @@ struct SceneObjects {
     Model M_Fire;
     Model M_Bar;
     Model M_Bar2;
+    Model M_Torch;
     Model M_Orc;
     Model M_Sitting;
 
@@ -38,6 +39,7 @@ struct SceneObjects {
     Texture T_Fire;
     Texture T_Bar;
     Texture T_Bar2;
+    Texture T_Torch;
     Texture T_Orc;
     Texture T_Sitting;
 
@@ -53,13 +55,16 @@ struct SceneObjects {
     DescriptorSet DS_Orc;
     DescriptorSet DS_Sitting;
 
+    std::vector<DescriptorSet> DS_Torches;
+    //Torch positions
+    std::vector<glm::vec3>     torchPositions;
+    std::vector<float>         torchYaws;
+
 
     // ---- Room: floor, 4 walls, ceiling ----
     Model         M_Floor,  M_WallN,  M_WallS,  M_WallE,  M_WallW,  M_Ceiling;
     DescriptorSet DS_Floor, DS_WallN, DS_WallS, DS_WallE, DS_WallW, DS_Ceiling;
     Texture       T_Floor,  T_Wall,   T_Ceiling;
-
-
 
 
     // Load all models. Call from localInit().
@@ -89,5 +94,5 @@ struct SceneObjects {
                  const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 16; }  //
+    int count() const { return 20; }  //
 };
