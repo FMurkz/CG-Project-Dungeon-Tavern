@@ -10,10 +10,17 @@ struct Vertex {
     glm::vec2 uv;
 };
 
+struct PointLight {
+    alignas(16) glm::vec3 position;
+    alignas(16) glm::vec3 color;
+};
+
 struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 lightDir;
     alignas(16) glm::vec4 lightColor;
     alignas(16) glm::vec3 eyePos;
+    alignas(16) PointLight torchLight[4];
+    alignas(4)  float time;
 };
 
 class DungeonTavern : public BaseProject {
@@ -29,7 +36,6 @@ protected:
     RenderPass RP;
     Pipeline P;
     Pipeline P_UI;
-    Pipeline P_Torch;
 
     // All scene objects
     SceneObjects scene;
@@ -45,6 +51,7 @@ protected:
     glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, 9.0f);
     float camYaw = glm::radians(180.0f);
     float camPitch = 0.0f;
+    float elapsedTime = 0.0f;
 
     // NPC interaction state
     NPCInteraction npcInteraction{
@@ -116,7 +123,7 @@ protected:
 
         P.init(this, &VD, "shaders/shader.vert.spv", "shaders/shader.frag.spv",
                {&DSL_Global, &DSL_Object});
-        P.setCullMode(VK_CULL_MODE_BACK_BIT);
+        P.setCullMode(VK_CULL_MODE_NONE);
 
         P_UI.init(this,
           &VD_UI,
@@ -153,10 +160,8 @@ protected:
 
     void pipelinesAndDescriptorSetsCleanup() {
         P.cleanup();
-        RP.cleanup();
-
         P_UI.cleanup();
-
+        RP.cleanup();
         DS_Global.cleanup();
         scene.cleanupDescriptorSets();
         dialogBox.cleanupDescriptorSet();
@@ -254,12 +259,28 @@ protected:
             npcInteraction.hasInteracted(),
             cameraPos
         );
+        //Time
+        elapsedTime += deltaT;
 
         // Global UBO (lighting + camera)
         GlobalUniformBufferObject gubo{};
         gubo.lightDir   = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
         gubo.lightColor = glm::vec4(1.0f);
         gubo.eyePos     = cameraPos;
+        gubo.time       = elapsedTime;
+        constexpr float ROOM_HALF_T = 10.0f;
+        constexpr float LIGHT_OFFSET = 3.0f;
+        gubo.torchLight[0].position = glm::vec3(-ROOM_HALF_T + 0.6f, LIGHT_OFFSET,  4.0f);
+        gubo.torchLight[1].position = glm::vec3(-ROOM_HALF_T + 0.6f, LIGHT_OFFSET, -4.0f);
+        gubo.torchLight[2].position = glm::vec3( ROOM_HALF_T - 0.6f, LIGHT_OFFSET,  4.0f);
+        gubo.torchLight[3].position = glm::vec3( ROOM_HALF_T - 0.6f, LIGHT_OFFSET, -4.0f);
+
+        // Warm orange torch color, multiplied by intensity
+        glm::vec3 torchColor = glm::vec3(1.0f, 0.55f, 0.15f) * 4.0f;
+        for (int i = 0; i < 4; ++i) {
+            gubo.torchLight[i].color = torchColor;
+        }
+
         DS_Global.map(currentImage, &gubo, 0);
     }
 };

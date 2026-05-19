@@ -320,7 +320,7 @@ void SceneObjects::updateUBOs(int currentImage,
     }
 
     //-----Torches-----
-    const float TORCH_SCALE = 0.01f;
+    const float TORCH_SCALE = 0.3f;
     for (size_t i = 0; i < DS_Torches.size(); ++i) {
         glm::mat4 m =
               glm::translate(glm::mat4(1.0f), torchPositions[i])
