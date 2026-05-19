@@ -10,6 +10,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Fire.init(bp, VD, "assets/models/fireplace.obj", OBJ);
     M_Bar.init(bp, VD, "assets/models/bar.obj", OBJ);
     M_Bar2.init(bp, VD, "assets/models/bar2.obj", OBJ);
+    M_Orc.init(bp, VD, "assets/models/orc.obj", OBJ);
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
@@ -21,6 +22,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Bar2.init(bp, "assets/textures/Bar.png");
     T_Wall   .init(bp, "assets/textures/wall.jpg");
     T_Ceiling.init(bp, "assets/textures/ceiling.png");
+    T_Orc.init(bp, "assets/textures/character1.png");
     //============================================================
 
     //==========================================================================
@@ -134,6 +136,7 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_Fire.init(bp, DSL_Object, { T_Fire.getViewAndSampler() });
     DS_Bar.init(bp, DSL_Object, { T_Bar.getViewAndSampler() });
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
+    DS_Orc.init(bp, DSL_Object, { T_Orc.getViewAndSampler() });
     //Room
     DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -152,6 +155,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Table_C.cleanup();
     DS_Fire.cleanup();
     DS_Floor.cleanup();
+    DS_Orc.cleanup();
 
     //Room
     DS_WallN.cleanup();
@@ -171,6 +175,7 @@ void SceneObjects::cleanupAll() {
     M_Fire.cleanup();
     M_Bar.cleanup();
     M_Bar2.cleanup();
+    M_Orc.cleanup();
 
     //Room
     M_Floor.cleanup();
@@ -191,6 +196,7 @@ void SceneObjects::cleanupAll() {
     T_Bar2.cleanup();
     T_Wall.cleanup();
     T_Ceiling.cleanup();
+    T_Orc.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
@@ -233,6 +239,11 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     DS_Bar2.bind(cb, P, 1, currentImage);
     M_Bar2.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Bar2.indices.size()), 1, 0, 0, 0);
+    // Orc
+    DS_Orc.bind(cb, P, 1, currentImage);
+    M_Orc.bind(cb);
+    vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Orc.indices.size()), 1, 0, 0, 0);
+
 
     //====================================================================
     //                          ROOM
@@ -273,7 +284,7 @@ void SceneObjects::updateUBOs(int currentImage,
     // ----- Character -----
     constexpr float CHAR_SCALE    = 0.01f;
     constexpr float CHAR_Y_OFFSET = 0.0f;
-    const glm::vec3 npcPosition = glm::vec3(0.0f, CHAR_Y_OFFSET, 0.0f);
+    const glm::vec3 npcPosition = glm::vec3(2.0f, CHAR_Y_OFFSET, 2.0f);
 
     float npcRotation = 0.0f;
 
@@ -327,6 +338,19 @@ void SceneObjects::updateUBOs(int currentImage,
     char2Ubo.mvpMat    = proj * view * char2Model;
     char2Ubo.normalMat = glm::inverse(glm::transpose(char2Model));
     DS_Character2.map(currentImage, &char2Ubo, 0);
+    // ----- Orc -----
+    constexpr float ORC_SCALE    = 20.3f; //
+    constexpr float ORC_Y_OFFSET = 0.0f;  //
+
+    glm::mat4 orcModel =
+          glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, ORC_Y_OFFSET, 2.0f))
+        * glm::scale    (glm::mat4(1.0f), glm::vec3(ORC_SCALE));
+
+    UniformBufferObject orcUbo{};
+    orcUbo.modelMat  = orcModel;
+    orcUbo.mvpMat    = proj * view * orcModel;
+    orcUbo.normalMat = glm::inverse(glm::transpose(orcModel));
+    DS_Orc.map(currentImage, &orcUbo, 0);
 
     // ----- TABLES
     constexpr float TABLE_SCALE    = 0.013f;

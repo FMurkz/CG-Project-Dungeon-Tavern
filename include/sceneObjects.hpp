@@ -26,6 +26,7 @@ struct SceneObjects {
     Model M_Fire;
     Model M_Bar;
     Model M_Bar2;
+    Model M_Orc;
 
 
     // ---- Textures ----
@@ -35,6 +36,7 @@ struct SceneObjects {
     Texture T_Fire;
     Texture T_Bar;
     Texture T_Bar2;
+    Texture T_Orc;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
@@ -45,6 +47,7 @@ struct SceneObjects {
     DescriptorSet DS_Fire;
     DescriptorSet DS_Bar;
     DescriptorSet DS_Bar2;
+    DescriptorSet DS_Orc;
 
 
     // ---- Room: floor, 4 walls, ceiling ----
@@ -75,5 +78,5 @@ struct SceneObjects {
     void updateUBOs(int currentImage, const glm::mat4& proj, const glm::mat4& view, bool npcInteracted, const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 14; }  //
+    int count() const { return 15; }  //
 };
