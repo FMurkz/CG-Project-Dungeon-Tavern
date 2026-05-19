@@ -124,8 +124,8 @@ protected:
         // else in this file needs to change.
         // ---------------------------------------------------------------
         std::vector<NPCInteractionDef> npcDefs = {
-            { glm::vec3( 2.0f, 0.0f,  2.0f), 2.0f, "assets/ui/innkeeper_dialog.png" },
-            { glm::vec3(-3.0f, 0.0f,  1.0f), 2.0f, "assets/ui/orc_dialog.png"       },
+            { glm::vec3( 2.0f, 0.0f,  2.0f), 3.0f, "assets/ui/innkeeper_dialog.png" },
+            { glm::vec3(-6.3f, 0.0f,  7.3f), 3.0f, "assets/ui/orc_dialog.png"       },
             // { glm::vec3( 5.0f, 0.0f, -2.0f), 2.0f, "assets/ui/merchant_dialog.png" },
         };
 

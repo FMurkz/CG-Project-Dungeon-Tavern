@@ -350,12 +350,31 @@ void SceneObjects::updateUBOs(int currentImage,
     char2Ubo.normalMat = glm::inverse(glm::transpose(char2Model));
     DS_Character2.map(currentImage, &char2Ubo, 0);
     // ----- Orc -----
-    constexpr float ORC_SCALE    = 1.0; //
-    constexpr float ORC_Y_OFFSET = 0.0f;  //
+    constexpr float ORC_SCALE    = 1.0f;
+    constexpr float ORC_Y_OFFSET = 0.0f;
+    const glm::vec3 orcPosition  = glm::vec3(-6.3f, ORC_Y_OFFSET, 7.3f); // Extracted variable
+
+    // Calculate dynamic rotation for Orc
+    float orcRotation = glm::radians(180.0f); // Default resting rotation angle
+
+    if (npcInteracted) {
+        // Direction from Orc to player, horizontal XZ-plane
+        glm::vec3 orcDirectionToPlayer = playerPosition - orcPosition;
+        orcDirectionToPlayer.y = 0.0f;
+
+        if (glm::length(orcDirectionToPlayer) > 0.0001f) {
+            orcDirectionToPlayer = glm::normalize(orcDirectionToPlayer);
+
+            // Computes yaw to face player.
+            // Note: If his model maps facing a different way natively,
+            // you can add or subtract an offset like `+ glm::radians(180.0f)` here.
+            orcRotation = std::atan2(orcDirectionToPlayer.x, orcDirectionToPlayer.z);
+        }
+    }
 
     glm::mat4 orcModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(-6.3f, ORC_Y_OFFSET, 7.3f))
-        * glm::rotate   (glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+          glm::translate(glm::mat4(1.0f), orcPosition)
+        * glm::rotate   (glm::mat4(1.0f), orcRotation, glm::vec3(0.0f, 1.0f, 0.0f)) // Dynamic rotation bound!
         * glm::scale    (glm::mat4(1.0f), glm::vec3(ORC_SCALE));
 
     UniformBufferObject orcUbo{};
