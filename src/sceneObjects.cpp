@@ -18,7 +18,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
-    T_Character2.init(bp, "assets/textures/character2.jpg");
+    T_Character2.init(bp, "assets/textures/character2.png");
     T_Table.init(bp, "assets/textures/table.jpeg");
     T_Fire.init(bp, "assets/textures/fireplace_Albedo.png");
     T_Floor.init(bp, "assets/textures/floor.jpg");
@@ -172,20 +172,14 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // ============================================================
     // NPCs
     // ============================================================
-    collisionSystem.addCircleCollider(
-        glm::vec2(0.0f, 0.0f),
-        0.40f
-    );
+    collisionSystem.addCircleCollider(glm::vec2(2.0f, 2.0f), 0.20f);
 
-    collisionSystem.addCircleCollider(
-        glm::vec2(-2.0f, -2.0f),
-        0.40f
-    );
+    collisionSystem.addCircleCollider(glm::vec2(6.1f, 1.0f), 0.20f);
 
     // Orc / bartender
     collisionSystem.addCircleCollider(
         glm::vec2(-6.3f, 7.3f),
-        0.40f
+        0.20f
     );
 
     // ============================================================
@@ -194,17 +188,17 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // ============================================================
     collisionSystem.addBoxCollider(
         glm::vec2(5.0f, -4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     collisionSystem.addBoxCollider(
         glm::vec2(-5.0f, -4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     collisionSystem.addBoxCollider(
         glm::vec2(5.0f, 4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     // ============================================================
@@ -522,11 +516,12 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_WallW.map(currentImage, &roomUbo, 0);
     DS_Ceiling.map(currentImage, &roomUbo, 0);
     // ----- Character 2 -----
-    constexpr float CHAR2_SCALE    = 1.3f;
+    constexpr float CHAR2_SCALE    = 1.15f;
     constexpr float CHAR2_Y_OFFSET = 0.0f;
 
     glm::mat4 char2Model =
-          glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, CHAR2_Y_OFFSET, -2.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(6.1f, CHAR2_Y_OFFSET, 1.0f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(CHAR2_SCALE));
 
     UniformBufferObject char2Ubo{};
