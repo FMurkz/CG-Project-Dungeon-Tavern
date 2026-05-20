@@ -13,11 +13,13 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Torch.init(bp, VD, "assets/models/torch.obj", OBJ);
     M_Orc.init(bp, VD, "assets/models/orc.obj", OBJ);
     M_Sitting.init(bp, VD, "assets/models/sitting.obj", OBJ);
+    M_Door.init(bp, VD, "assets/models/doors.obj", OBJ);
+    M_Chain.init(bp, VD, "assets/models/chain.obj", OBJ);
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
-    T_Character2.init(bp, "assets/textures/character2.jpg");
-    T_Table.init(bp, "assets/textures/table.jpg");
+    T_Character2.init(bp, "assets/textures/character2.png");
+    T_Table.init(bp, "assets/textures/table.jpeg");
     T_Fire.init(bp, "assets/textures/fireplace_Albedo.png");
     T_Floor.init(bp, "assets/textures/floor.jpg");
     T_Bar.init(bp, "assets/textures/BeerBar_Base_color_1001.png");
@@ -27,9 +29,24 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
     T_Orc.init(bp, "assets/textures/Orc.png");
     T_Sitting.init(bp, "assets/textures/Sitting.png");
+    T_Door.init(bp, "assets/textures/doors.png");
+    T_Chain.init(bp, "assets/textures/chain.png");
     //============================================================
 
     constexpr float ROOM_HALF_T = 10.0f;
+    chainPositions = {
+        {-ROOM_HALF_T + 0.1f, 1.5f,  1.9f},
+        {-ROOM_HALF_T + 0.1f, 1.5f, -1.9f},
+        { ROOM_HALF_T - 0.1f, 1.5f,  1.9f},
+        { ROOM_HALF_T - 0.1f, 1.5f, -1.9f},
+        { 5.0f, 1.5f, -ROOM_HALF_T + 0.1f},
+        {-5.0f, 1.5f, -ROOM_HALF_T + 0.1f},
+        { 5.0f, 1.5f,  ROOM_HALF_T - 0.1f},
+        {-5.0f, 1.5f,  ROOM_HALF_T - 0.1f},
+    };
+    chainRot = { 90.0f, 90.0f, 90.0f, 90.0f, 90.0f, 90.0f, 90.0f, 90.0f};
+    chainWallSpin = { 0.0f, 0.0f, 0.0f, 0.0f, 90.0f, 90.0f, 90.0f, 90.0f };
+
     torchPositions = {
         {-ROOM_HALF_T + 0.1f, 2.5f,  4.0f},
         {-ROOM_HALF_T + 0.1f, 2.5f, -4.0f},
@@ -155,14 +172,14 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // ============================================================
     // NPCs
     // ============================================================
-    collisionSystem.addCircleCollider(
-        glm::vec2(0.0f, 0.0f),
-        0.40f
-    );
+    collisionSystem.addCircleCollider(glm::vec2(2.0f, 2.0f), 0.20f);
 
+    collisionSystem.addCircleCollider(glm::vec2(6.1f, 1.0f), 0.20f);
+
+    // Orc / bartender
     collisionSystem.addCircleCollider(
-        glm::vec2(-2.0f, -2.0f),
-        0.40f
+        glm::vec2(-6.3f, 7.3f),
+        0.20f
     );
 
     // ============================================================
@@ -171,17 +188,17 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // ============================================================
     collisionSystem.addBoxCollider(
         glm::vec2(5.0f, -4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     collisionSystem.addBoxCollider(
         glm::vec2(-5.0f, -4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     collisionSystem.addBoxCollider(
         glm::vec2(5.0f, 4.0f),
-        glm::vec2(2.00f, 2.00f)
+        glm::vec2(1.2f, 1.2f)
     );
 
     // ============================================================
@@ -206,10 +223,16 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // SECOND BAR
     // Bar2 is rotated 90 degrees in updateUBOs()
     // ============================================================
+    // Horizontal side of the L-shaped bar
     collisionSystem.addBoxCollider(
-        glm::vec2(-6.0f, 6.0f),
-        glm::vec2(1.00f, 1.80f),
-        glm::radians(90.0f)
+        glm::vec2(-6.55f, 5.85f),
+        glm::vec2(2.45f, 0.65f)
+    );
+
+    // Vertical side of the L-shaped bar
+    collisionSystem.addBoxCollider(
+        glm::vec2(-4.70f, 7.20f),
+        glm::vec2(0.65f, 1.85f)
     );
 }
 
@@ -225,6 +248,7 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
     DS_Orc.init(bp, DSL_Object, { T_Orc.getViewAndSampler() });
     DS_Sitting.init(bp, DSL_Object, { T_Sitting.getViewAndSampler() });
+    DS_Door.init(bp, DSL_Object, { T_Door.getViewAndSampler() });
     //Room
     DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -237,6 +261,9 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     for (auto& ds : DS_Torches) {
         ds.init(bp, DSL_Object, { T_Torch.getViewAndSampler() });
     }
+
+    DS_Chains.resize(chainPositions.size());
+    for (auto& ds : DS_Chains) ds.init(bp, DSL_Object, { T_Chain.getViewAndSampler() });
 }
 
 void SceneObjects::cleanupDescriptorSets() {
@@ -250,8 +277,11 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Floor.cleanup();
     DS_Orc.cleanup();
     DS_Sitting.cleanup();
+    DS_Door.cleanup();
     for (auto& ds : DS_Torches) ds.cleanup();
     DS_Torches.clear();
+    for (auto& ds : DS_Chains) ds.cleanup();
+    DS_Chains.clear();
 
     //Room
     DS_WallN.cleanup();
@@ -274,6 +304,8 @@ void SceneObjects::cleanupAll() {
     M_Orc.cleanup();
     M_Sitting.cleanup();
     M_Torch.cleanup();
+    M_Door.cleanup();
+    M_Chain.cleanup();
 
     //Room
     M_Floor.cleanup();
@@ -297,6 +329,8 @@ void SceneObjects::cleanupAll() {
     T_Torch.cleanup();
     T_Orc.cleanup();
     T_Sitting.cleanup();
+    T_Door.cleanup();
+    T_Chain.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
@@ -355,6 +389,16 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Orc.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Orc.indices.size()), 1, 0, 0, 0);
 
+    DS_Door.bind(cb, P, 1, currentImage);
+    M_Door.bind(cb);
+    vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Door.indices.size()), 1, 0, 0, 0);
+
+
+    M_Chain.bind(cb);
+    for (auto& ds : DS_Chains) {
+        ds.bind(cb, P, 1, currentImage);
+        vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Chain.indices.size()), 1, 0, 0, 0);
+    }
 
     //====================================================================
     //                          ROOM
@@ -413,6 +457,13 @@ void SceneObjects::updateUBOs(int currentImage,
         }
     }
 
+    //-------Door---
+    const float DOOR_SCALE = 1.5f;
+    glm::mat4 doorModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f))
+            * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+            * glm::scale(glm::mat4(1.0f), glm::vec3(DOOR_SCALE));
+
     //-----Torches-----
     const float TORCH_SCALE = 0.3f;
     for (size_t i = 0; i < DS_Torches.size(); ++i) {
@@ -427,6 +478,20 @@ void SceneObjects::updateUBOs(int currentImage,
         DS_Torches[i].map(currentImage, &u, 0);
     }
 
+    const float CHAIN_SCALE = 1.25f;
+    for (size_t i = 0; i < DS_Chains.size(); ++i) {
+        glm::mat4 m_c =
+              glm::translate(glm::mat4(1.0f), chainPositions[i])
+            * glm::rotate(glm::mat4(1.0f), glm::radians(chainWallSpin[i]), glm::vec3(0,1,0))
+            * glm::rotate(glm::mat4(1.0f), glm::radians(chainRot[i]), glm::vec3(1,0,0))
+            * glm::rotate(glm::mat4(1.0f), glm::radians(chainRot[i]), glm::vec3(0,0,1))
+            * glm::scale(glm::mat4(1.0f), glm::vec3(CHAIN_SCALE));
+        UniformBufferObject u{};
+        u.modelMat  = m_c;
+        u.mvpMat    = proj * view * m_c;
+        u.normalMat = glm::inverse(glm::transpose(m_c));
+        DS_Chains[i].map(currentImage, &u, 0);
+    }
     glm::mat4 charModel =
           glm::translate(glm::mat4(1.0f), npcPosition)
         * glm::rotate   (glm::mat4(1.0f), npcRotation, glm::vec3(0.0f, 1.0f, 0.0f))
@@ -451,11 +516,12 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_WallW.map(currentImage, &roomUbo, 0);
     DS_Ceiling.map(currentImage, &roomUbo, 0);
     // ----- Character 2 -----
-    constexpr float CHAR2_SCALE    = 1.3f;
+    constexpr float CHAR2_SCALE    = 1.15f;
     constexpr float CHAR2_Y_OFFSET = 0.0f;
 
     glm::mat4 char2Model =
-          glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, CHAR2_Y_OFFSET, -2.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(6.1f, CHAR2_Y_OFFSET, 1.0f))
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(-50.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(CHAR2_SCALE));
 
     UniformBufferObject char2Ubo{};
@@ -502,7 +568,7 @@ void SceneObjects::updateUBOs(int currentImage,
     constexpr float SITTING_Y_OFFSET = 0.0f; //
 
     glm::mat4 sittingModel =
-          glm::translate(glm::mat4(1.0f), glm::vec3(3.65f, SITTING_Y_OFFSET, 3.0f))
+          glm::translate(glm::mat4(1.0f), glm::vec3(3.87f, SITTING_Y_OFFSET, 3.5f))
         * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(SITTING_SCALE));
 
@@ -513,12 +579,13 @@ void SceneObjects::updateUBOs(int currentImage,
     DS_Sitting.map(currentImage, &sittingUbo, 0);
 
     // ----- TABLES
-    constexpr float TABLE_SCALE    = 0.013f;
+    constexpr float TABLE_SCALE    = 0.13f;
     constexpr float TABLE_Y_OFFSET = 0.0f;
 
     // ----- Table A -----
     glm::mat4 tableModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, TABLE_Y_OFFSET, -4.0f))
+        * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(TABLE_SCALE));
 
     UniformBufferObject tableUbo{};
@@ -530,6 +597,7 @@ void SceneObjects::updateUBOs(int currentImage,
     // ----- Table B  -----
     glm::mat4 tableBModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, TABLE_Y_OFFSET, -4.0f))
+        * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(TABLE_SCALE));
 
     UniformBufferObject tableBUbo{};
@@ -541,6 +609,7 @@ void SceneObjects::updateUBOs(int currentImage,
     // ----- Table C -----
     glm::mat4 tableCModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, TABLE_Y_OFFSET, 4.0f))
+        * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(TABLE_SCALE));
 
     UniformBufferObject tableCUbo{};
@@ -584,7 +653,7 @@ void SceneObjects::updateUBOs(int currentImage,
 
     glm::mat4 bar2Model =
           glm::translate(glm::mat4(1.0f), glm::vec3(-6.0f, BAR2_Y_OFFSET, 6.0f))
-        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) // ⬇️ FIXED: Semicolon removed!
+        * glm::rotate   (glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f))
         * glm::scale    (glm::mat4(1.0f), glm::vec3(BAR2_SCALE));
 
     UniformBufferObject bar2Ubo{};
@@ -592,4 +661,10 @@ void SceneObjects::updateUBOs(int currentImage,
     bar2Ubo.mvpMat    = proj * view * bar2Model;
     bar2Ubo.normalMat = glm::inverse(glm::transpose(bar2Model));
     DS_Bar2.map(currentImage, &bar2Ubo, 0);
+
+    UniformBufferObject doorUbo{};
+    doorUbo.modelMat  = doorModel;
+    doorUbo.mvpMat    = proj * view * doorModel;
+    doorUbo.normalMat = glm::inverse(glm::transpose(doorModel));
+    DS_Door.map(currentImage, &doorUbo, 0);
 }

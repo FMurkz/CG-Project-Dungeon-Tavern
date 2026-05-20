@@ -43,7 +43,7 @@ void main() {
 
     // Specular term: shiny highlight where reflection points at camera
     float specStrength = pow(max(dot(N, H), 0.0), 32.0);
-    vec3 specular = vec3(0.4) * specStrength * 0.3;
+    vec3 specular = vec3(0.4) * specStrength * 0.01;
 
     // Ambient: dim baseline so shadows aren't pitch black
     vec3 ambient  = albedo * 0.02;
