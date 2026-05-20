@@ -31,6 +31,7 @@ struct SceneObjects {
     Model M_Orc;
     Model M_Sitting;
     Model M_Door;
+    Model M_Chain;
 
 
     // ---- Textures ----
@@ -44,6 +45,7 @@ struct SceneObjects {
     Texture T_Orc;
     Texture T_Sitting;
     Texture T_Door;
+    Texture T_Chain;
 
     // ---- Per-object descriptor sets ----
     DescriptorSet DS_Character;
@@ -62,6 +64,12 @@ struct SceneObjects {
     //Torch positions
     std::vector<glm::vec3>     torchPositions;
     std::vector<float>         torchYaws;
+
+    std::vector<DescriptorSet> DS_Chains;
+    //Torch positions
+    std::vector<glm::vec3>     chainPositions;
+    std::vector<float>         chainRot;
+    std::vector<float>         chainWallSpin;
 
 
     // ---- Room: floor, 4 walls, ceiling ----
@@ -101,5 +109,5 @@ struct SceneObjects {
                  const glm::vec3& playerPosition);
 
     // Number of objects. Used to size the descriptor pool.
-    int count() const { return 21; }  //
+    int count() const { return 29; }  //
 };
