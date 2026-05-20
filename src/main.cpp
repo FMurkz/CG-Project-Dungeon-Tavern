@@ -3,6 +3,7 @@
 #include "NPCInteraction.hpp"
 #include "DialogBox.hpp"
 #include "CollisionSystem.hpp"
+#include "TorchInteraction.hpp"
 #include <chrono>
 #include <vector>
 
@@ -44,6 +45,9 @@ protected:
 
     // Collision handling
     CollisionSystem collisionSystem;
+
+    // Torch interactions
+    TorchInteraction torchInteraction;
 
     // Dialog UI overlay
     DialogBox dialogBox;
@@ -141,6 +145,9 @@ protected:
 
         scene.loadAll(this, &VD);
         scene.registerColliders(collisionSystem);
+
+        // Allow the player to toggle torches by pressing F nearby
+        torchInteraction.init(scene.getTorchPositions(), 3.0f);
         // ---------------------------------------------------------------
         // Define every interactable NPC here.
         // To add a new NPC, append another NPCInteractionDef — nothing
@@ -283,8 +290,11 @@ protected:
         }
 
         cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
-        // NPC interaction
 
+        // Toggle the nearest torch on/off with F
+        torchInteraction.update(window, cameraPos);
+
+        // NPC interaction
         if (activeNpcIndex != previousActiveIndex) {
             previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
@@ -321,8 +331,13 @@ protected:
 
         // Warm orange torch color, multiplied by intensity
         glm::vec3 torchColor = glm::vec3(1.0f, 0.55f, 0.15f) * 4.0f;
+
         for (int i = 0; i < 4; ++i) {
-            gubo.torchLight[i].color = torchColor;
+            if (torchInteraction.isLit(i)) {
+                gubo.torchLight[i].color = torchColor;
+            } else {
+                gubo.torchLight[i].color = glm::vec3(0.0f);
+            }
         }
 
         DS_Global.map(currentImage, &gubo, 0);

@@ -167,6 +167,12 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
         0.40f
     );
 
+    // Orc / bartender
+    collisionSystem.addCircleCollider(
+        glm::vec2(-6.3f, 7.3f),
+        0.40f
+    );
+
     // ============================================================
     // TABLES
     // Positions match updateUBOs()
@@ -208,10 +214,16 @@ void SceneObjects::registerColliders(CollisionSystem& collisionSystem) const {
     // SECOND BAR
     // Bar2 is rotated 90 degrees in updateUBOs()
     // ============================================================
+    // Horizontal side of the L-shaped bar
     collisionSystem.addBoxCollider(
-        glm::vec2(-6.0f, 6.0f),
-        glm::vec2(1.00f, 1.80f),
-        glm::radians(90.0f)
+        glm::vec2(-6.55f, 5.85f),
+        glm::vec2(2.45f, 0.65f)
+    );
+
+    // Vertical side of the L-shaped bar
+    collisionSystem.addBoxCollider(
+        glm::vec2(-4.70f, 7.20f),
+        glm::vec2(0.65f, 1.85f)
     );
 }
 

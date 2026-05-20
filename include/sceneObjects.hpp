@@ -76,6 +76,10 @@ struct SceneObjects {
     // Register colliders for all solid scene objects.
     void registerColliders(CollisionSystem& collisionSystem) const;
 
+    const std::vector<glm::vec3>& getTorchPositions() const {
+        return torchPositions;
+    }
+
     // Create descriptor sets. Call from pipelinesAndDescriptorSetsInit().
     void initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_Object);
 
