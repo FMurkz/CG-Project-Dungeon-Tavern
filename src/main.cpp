@@ -1,8 +1,10 @@
+#define MINIAUDIO_IMPLEMENTATION
 #include "modules/Starter.hpp"
 #include "sceneObjects.hpp"
 #include "NPCInteraction.hpp"
 #include "DialogBox.hpp"
 #include "CollisionSystem.hpp"
+#include "miniaudio.h"
 #include "TorchInteraction.hpp"
 #include <chrono>
 #include <vector>
@@ -28,6 +30,8 @@ struct GlobalUniformBufferObject {
 
 class DungeonTavern : public BaseProject {
 protected:
+    //Music
+    ma_engine audioEngine;
     // Layouts and Pipelines
     VertexDescriptor VD;
     VertexDescriptor VD_UI;
@@ -174,6 +178,10 @@ protected:
 
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
+
+        //Music config
+        ma_engine_init(NULL, &audioEngine);
+        ma_engine_play_sound(&audioEngine, "assets/audio/tavern.mp3", NULL);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -217,6 +225,9 @@ protected:
 
         VD.cleanup();
         VD_UI.cleanup();
+
+        //Music
+        ma_engine_uninit(&audioEngine);
     }
 
     static void populateCommandBufferAccess(VkCommandBuffer cb, int img, void *p) {
@@ -295,6 +306,7 @@ protected:
         torchInteraction.update(window, cameraPos);
 
         // NPC interaction
+
         if (activeNpcIndex != previousActiveIndex) {
             previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
@@ -331,7 +343,6 @@ protected:
 
         // Warm orange torch color, multiplied by intensity
         glm::vec3 torchColor = glm::vec3(1.0f, 0.55f, 0.15f) * 4.0f;
-
         for (int i = 0; i < 4; ++i) {
             if (torchInteraction.isLit(i)) {
                 gubo.torchLight[i].color = torchColor;
