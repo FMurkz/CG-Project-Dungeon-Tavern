@@ -13,6 +13,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     M_Torch.init(bp, VD, "assets/models/torch.obj", OBJ);
     M_Orc.init(bp, VD, "assets/models/orc.obj", OBJ);
     M_Sitting.init(bp, VD, "assets/models/sitting.obj", OBJ);
+    M_Door.init(bp, VD, "assets/models/doors.obj", OBJ);
 
     //                         Textures
     T_Character.init(bp, "assets/textures/character1.png");
@@ -27,6 +28,7 @@ void SceneObjects::loadAll(BaseProject* bp, VertexDescriptor* VD) {
     T_Ceiling.init(bp, "assets/textures/ceiling.jpg");
     T_Orc.init(bp, "assets/textures/Orc.png");
     T_Sitting.init(bp, "assets/textures/Sitting.png");
+    T_Door.init(bp, "assets/textures/doors.png");
     //============================================================
 
     constexpr float ROOM_HALF_T = 10.0f;
@@ -225,6 +227,7 @@ void SceneObjects::initDescriptorSets(BaseProject* bp, DescriptorSetLayout* DSL_
     DS_Bar2.init(bp, DSL_Object, { T_Bar2.getViewAndSampler() });
     DS_Orc.init(bp, DSL_Object, { T_Orc.getViewAndSampler() });
     DS_Sitting.init(bp, DSL_Object, { T_Sitting.getViewAndSampler() });
+    DS_Door.init(bp, DSL_Object, { T_Door.getViewAndSampler() });
     //Room
     DS_Floor.init(bp, DSL_Object, { T_Floor.getViewAndSampler() });
     DS_WallN    .init(bp, DSL_Object, { T_Wall     .getViewAndSampler() });
@@ -250,6 +253,7 @@ void SceneObjects::cleanupDescriptorSets() {
     DS_Floor.cleanup();
     DS_Orc.cleanup();
     DS_Sitting.cleanup();
+    DS_Door.cleanup();
     for (auto& ds : DS_Torches) ds.cleanup();
     DS_Torches.clear();
 
@@ -274,6 +278,7 @@ void SceneObjects::cleanupAll() {
     M_Orc.cleanup();
     M_Sitting.cleanup();
     M_Torch.cleanup();
+    M_Door.cleanup();
 
     //Room
     M_Floor.cleanup();
@@ -297,6 +302,7 @@ void SceneObjects::cleanupAll() {
     T_Torch.cleanup();
     T_Orc.cleanup();
     T_Sitting.cleanup();
+    T_Door.cleanup();
 }
 
 void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
@@ -355,6 +361,10 @@ void SceneObjects::drawAll(VkCommandBuffer cb, Pipeline& P, int currentImage) {
     M_Orc.bind(cb);
     vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Orc.indices.size()), 1, 0, 0, 0);
 
+    DS_Door.bind(cb, P, 1, currentImage);
+    M_Door.bind(cb);
+    vkCmdDrawIndexed(cb, static_cast<uint32_t>(M_Door.indices.size()), 1, 0, 0, 0);
+
 
     //====================================================================
     //                          ROOM
@@ -412,6 +422,13 @@ void SceneObjects::updateUBOs(int currentImage,
             npcRotation = std::atan2(directionToPlayer.x, directionToPlayer.z);
         }
     }
+
+    //-------Door---
+    const float DOOR_SCALE = 1.5f;
+    glm::mat4 doorModel =
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 10.0f))
+            * glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f))
+            * glm::scale(glm::mat4(1.0f), glm::vec3(DOOR_SCALE));
 
     //-----Torches-----
     const float TORCH_SCALE = 0.3f;
@@ -592,4 +609,10 @@ void SceneObjects::updateUBOs(int currentImage,
     bar2Ubo.mvpMat    = proj * view * bar2Model;
     bar2Ubo.normalMat = glm::inverse(glm::transpose(bar2Model));
     DS_Bar2.map(currentImage, &bar2Ubo, 0);
+
+    UniformBufferObject doorUbo{};
+    doorUbo.modelMat  = doorModel;
+    doorUbo.mvpMat    = proj * view * doorModel;
+    doorUbo.normalMat = glm::inverse(glm::transpose(doorModel));
+    DS_Door.map(currentImage, &doorUbo, 0);
 }
