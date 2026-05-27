@@ -1,4 +1,3 @@
-#define MINIAUDIO_IMPLEMENTATION
 #include "modules/Starter.hpp"
 #include "sceneObjects.hpp"
 #include "NPCInteraction.hpp"
@@ -15,11 +14,14 @@ struct Vertex {
     glm::vec2 uv;
 };
 
+//Use alignas to enforce std140 layout
+//This has to match the PointLight struct in shader.frag
 struct PointLight {
     alignas(16) glm::vec3 position;
     alignas(16) glm::vec3 color;
 };
 
+//This has to match the GlobalUniformBufferObject struct in shader.frag
 struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 lightDir;
     alignas(16) glm::vec4 lightColor;
@@ -28,23 +30,28 @@ struct GlobalUniformBufferObject {
     alignas(4)  float time;
 };
 
+//Inherits BaseProject, BaseProject owns run() (the main loop). it calls the
+//lifecycle methods below, they are overwritten here.
 class DungeonTavern : public BaseProject {
 protected:
-    //Music
+    //For music
     ma_engine audioEngine;
-    // Layouts and Pipelines
+
+    //Vertex layouts (3D / 2D UI)
     VertexDescriptor VD;
     VertexDescriptor VD_UI;
 
+    //Descriptor set layouts, resources each shader expects
     DescriptorSetLayout DSL_Object;
     DescriptorSetLayout DSL_Global;
     DescriptorSetLayout DSL_UI;
 
+    //Render pass + pipelines (3D scene / 2D UI overlay)
     RenderPass RP;
     Pipeline P;
     Pipeline P_UI;
 
-    // All scene objects
+    // Scene + game systems
     SceneObjects scene;
 
     // Collision handling
@@ -66,8 +73,7 @@ protected:
     float camPitch = 0.0f;
     float elapsedTime = 0.0f;
 
-    // --- NPC interactions ---
-    // To add a new NPC: append one NPCInteractionDef to npcDefs in localInit().
+    //NPC interaction state
     std::vector<NPCInteraction> npcs;
     std::vector<DialogBox>      npcDialogs;
     int activeNpcIndex      = -1;   // index of the currently open dialog, -1 = none
@@ -76,7 +82,7 @@ protected:
     void setWindowParameters() {
         windowWidth = 800;
         windowHeight = 600;
-        windowTitle = "Dungeon Tavern - Scene";
+        windowTitle = "Dungeon Tavern";
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.05f, 0.05f, 0.1f, 1.0f};
     }
@@ -87,7 +93,9 @@ protected:
         Ar = (float)w / (float)h;
     }
 
+    //Called once in run()
     void localInit() {
+        // Descriptor set layouts (resource schemas)
         DSL_Global.init(this, {
             {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS,
              sizeof(GlobalUniformBufferObject), 1}
@@ -107,6 +115,7 @@ protected:
          1}
         });
 
+        //Vertex layouts
         VD.init(this,
             {{0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX}},
             {
@@ -131,6 +140,7 @@ protected:
             }
         );
 
+        //Render pass + pipelines
         RP.init(this);
         RP.properties[0].clearValue = {0.05f, 0.05f, 0.1f, 1.0f};
 
@@ -145,37 +155,36 @@ protected:
           {&DSL_UI});
 
         P_UI.setCullMode(VK_CULL_MODE_NONE);
-        P_UI.setTransparency(true);
+        P_UI.setTransparency(true); // dialog boxes blend over the scene
 
+        //Load models/textures + register collision
         scene.loadAll(this, &VD);
         scene.registerColliders(collisionSystem);
 
-        // Allow the player to toggle torches by pressing F nearby
+        //-------------------INTERACTIONS---------------------
+        // Torch toggling (3.0f = interaction range)
         torchInteraction.init(scene.getTorchPositions(), 3.0f);
-        // ---------------------------------------------------------------
-        // Define every interactable NPC here.
-        // To add a new NPC, append another NPCInteractionDef — nothing
-        // else in this file needs to change.
-        // ---------------------------------------------------------------
+        // NPC definitions: position, interaction range, dialog image.
         std::vector<NPCInteractionDef> npcDefs = {
-            { glm::vec3( 2.0f, 0.0f,  2.0f), 3.0f, "assets/ui/dialog_innkeeper.png" },
-            { glm::vec3(-6.3f, 0.0f,  7.3f), 3.0f, "assets/ui/dialog_orc.png"       },
-            // { glm::vec3( 5.0f, 0.0f, -2.0f), 2.0f, "assets/ui/dialog_merchant.png" },
+            { glm::vec3( 2.0f, 0.0f,  2.0f), 3.0f, "assets/ui/innkeeper_dialog.png" },
+            { glm::vec3(-6.3f, 0.0f,  7.3f), 3.0f, "assets/ui/orc_dialog.png"       },
         };
-
+        // Build interaction + dialog objects from each definition
         for (auto& def : npcDefs) {
             npcs.emplace_back(def);
             npcDialogs.emplace_back();
             npcDialogs.back().init(this, &VD_UI, def.dialogTexturePath);
         }
-        // ---------------------------------------------------------------
+        //--------------------------------------------------------
 
+        // Size the descriptor pool; must cover every texture/UBO/set used
         int sceneTextures = scene.count();
         int uiTextures    = static_cast<int>(npcDialogs.size());
         DPSZs.texturesInPool      = sceneTextures + uiTextures;
         DPSZs.uniformBlocksInPool = scene.count() + 1;           // objects + global
         DPSZs.setsInPool          = scene.count() + 1 + uiTextures; // objects + global + UI dialogs
 
+        // Finalize: aspect ratio, first command buffer, start music
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
@@ -183,7 +192,8 @@ protected:
         ma_engine_init(NULL, &audioEngine);
         ma_engine_play_sound(&audioEngine, "assets/audio/tavern_ambience.mp3", NULL);
     }
-
+    //Runs once at startup and on every window resize
+    //Rebuilds everything that depends on the swapchain (on resize everything needs to be rebuilt): Render pass, pipelines, descriptor sets
     void pipelinesAndDescriptorSetsInit() {
         RP.create();
 
@@ -208,14 +218,13 @@ protected:
             dlg.cleanupDescriptorSet();
     }
 
+    //Runs on shutdown
     void localCleanup() {
         scene.cleanupAll();
 
         for (auto& dlg : npcDialogs)
             dlg.cleanup();
-
         RP.destroy();
-
         P.destroy();
         P_UI.destroy();
 
@@ -229,11 +238,13 @@ protected:
         //Music
         ma_engine_uninit(&audioEngine);
     }
-
+    //Bridges the framework's C-style callback to our C++ method.
     static void populateCommandBufferAccess(VkCommandBuffer cb, int img, void *p) {
         ((DungeonTavern *)p)->populateCommandBuffer(cb, img);
     }
 
+    //runs only when the command list needs re-recording
+    //When what is being drawn changes: for this case it is whether a dialog box is showing.
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
         RP.begin(commandBuffer, currentImage);
 
@@ -243,7 +254,7 @@ protected:
         DS_Global.bind(commandBuffer, P, 0, currentImage);
         scene.drawAll(commandBuffer, P, currentImage);
 
-        // Draw whichever dialog box is currently active (if any)
+        //Draw active dialog box on top, if one is open
         if (activeNpcIndex >= 0) {
             P_UI.bind(commandBuffer);
             npcDialogs[activeNpcIndex].draw(commandBuffer, P_UI, currentImage);
@@ -252,16 +263,18 @@ protected:
         RP.end(commandBuffer);
     }
 
+    //Called every frame
     void updateUniformBuffer(uint32_t currentImage) {
+        // Close program if ESC is pressed
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) glfwSetWindowShouldClose(window, GL_TRUE);
 
-        // Timer
+        //Timing variables for deltaT
         static auto lastTime = std::chrono::high_resolution_clock::now();
         auto currentTime = std::chrono::high_resolution_clock::now();
         float deltaT = std::chrono::duration<float>(currentTime - lastTime).count();
         lastTime = currentTime;
 
-        // Input
+        //Camera rotation
         constexpr float ROT_SPEED = glm::radians(90.0f);
         if (glfwGetKey(window, GLFW_KEY_D))    camYaw   -= ROT_SPEED * deltaT;
         if (glfwGetKey(window, GLFW_KEY_A))    camYaw   += ROT_SPEED * deltaT;
@@ -269,21 +282,29 @@ protected:
         if (glfwGetKey(window, GLFW_KEY_DOWN)) camPitch -= ROT_SPEED * deltaT;
         camPitch = glm::clamp(camPitch, glm::radians(-85.0f), glm::radians(85.0f));
 
+        //Look direction (derived from camera rotation)
         const glm::vec3 forward = glm::vec3(
             cos(camPitch) * sin(camYaw),
             sin(camPitch),
             cos(camPitch) * cos(camYaw)
         );
 
-        glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z));
-        constexpr float MOVE_SPEED = 3.0f;
+        glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z)); // Y=0.0 so you don't start flying when looking up
+        constexpr float MOVE_SPEED = 1.8f;
 
+        //Movement forward/backward + collision
         glm::vec3 movementDelta = glm::vec3(0.0f);
 
-        // --- NPC interactions ---
-        // Update every NPC and find which one (if any) has an open dialog.
-        // Only one dialog can be open at a time: once we find an active NPC
-        // we skip updating the rest so their E-press edge-detection stays clean.
+        if (glfwGetKey(window, GLFW_KEY_W)) {
+            movementDelta += walkDir * MOVE_SPEED * deltaT;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_S)) {
+            movementDelta -= walkDir * MOVE_SPEED * deltaT;
+        }
+        cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
+
+        //Interactions: NPC update, torch toggle, command-buffer re-record
         int newActive = -1;
         for (int i = 0; i < static_cast<int>(npcs.size()); i++) {
             if (newActive == -1)
@@ -306,18 +327,16 @@ protected:
         torchInteraction.update(window, cameraPos);
 
         // NPC interaction
-
         if (activeNpcIndex != previousActiveIndex) {
             previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
         }
-
-        // Matrices
+        //Matrices (view + projection)
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + forward, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), Ar, 0.1f, 100.0f);
-        proj[1][1] *= -1;
+        proj[1][1] *= -1; //Vulkan's clip-space Y is inverted vs OpenGL
 
-        // Update all object UBOs (transforms live in SceneObjects)
+        //Update per object UBO
         scene.updateUBOs(
             currentImage,
             proj,
@@ -328,12 +347,14 @@ protected:
         //Time
         elapsedTime += deltaT;
 
-        // Global UBO (lighting + camera)
+        //Global UBO: build the lighting/camera struct that shader.frag reads as 'gubo'
         GlobalUniformBufferObject gubo{};
         gubo.lightDir   = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
         gubo.lightColor = glm::vec4(1.0f);
         gubo.eyePos     = cameraPos;
         gubo.time       = elapsedTime;
+
+        //Torch positions (four corners of the room)
         constexpr float ROOM_HALF_T = 10.0f;
         constexpr float LIGHT_OFFSET = 3.0f;
         gubo.torchLight[0].position = glm::vec3(-ROOM_HALF_T + 0.6f, LIGHT_OFFSET,  4.0f);
@@ -351,6 +372,7 @@ protected:
             }
         }
 
+        //Upload the global UBO to the GPU
         DS_Global.map(currentImage, &gubo, 0);
     }
 };
