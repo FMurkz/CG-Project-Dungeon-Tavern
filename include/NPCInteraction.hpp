@@ -8,7 +8,7 @@
 struct NPCInteractionDef {
     glm::vec3   position;
     float       interactionDistance;
-    std::string dialogTexturePath;   // e.g. "assets/ui/innkeeper_dialog.png"
+    std::string dialogTexturePath;   // e.g. "assets/ui/dialog_innkeeper.png"
 };
 
 class NPCInteraction {
