@@ -290,7 +290,7 @@ protected:
         );
 
         glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z)); // Y=0.0 so you don't start flying when looking up
-        constexpr float MOVE_SPEED = 3.0f;
+        constexpr float MOVE_SPEED = 1.8f;
 
         //Movement forward/backward + collision
         glm::vec3 movementDelta = glm::vec3(0.0f);
