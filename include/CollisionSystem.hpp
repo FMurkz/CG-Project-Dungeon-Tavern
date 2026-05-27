@@ -8,7 +8,6 @@ struct BoxCollider2D {
     glm::vec2 halfSize;
     float rotationRadians;
 };
-
 struct CircleCollider2D {
     glm::vec2 center;
     float radius;

@@ -53,13 +53,20 @@ protected:
 
     // Scene + game systems
     SceneObjects scene;
+
+    // Collision handling
     CollisionSystem collisionSystem;
+
+    // Torch interactions
     TorchInteraction torchInteraction;
 
-    //Global descriptor set (lighting + camera)
+    // Dialog UI overlay
+    DialogBox dialogBox;
+
+    // Global descriptor set
     DescriptorSet DS_Global;
 
-    //Camera state
+    // Camera State
     float Ar = 0.0f;
     glm::vec3 cameraPos = glm::vec3(0.0f, 1.8f, 9.0f);
     float camYaw = glm::radians(180.0f);
@@ -69,7 +76,7 @@ protected:
     //NPC interaction state
     std::vector<NPCInteraction> npcs;
     std::vector<DialogBox>      npcDialogs;
-    int activeNpcIndex      = -1;
+    int activeNpcIndex      = -1;   // index of the currently open dialog, -1 = none
     int previousActiveIndex = -1;
 
     void setWindowParameters() {
@@ -174,15 +181,16 @@ protected:
         int sceneTextures = scene.count();
         int uiTextures    = static_cast<int>(npcDialogs.size());
         DPSZs.texturesInPool      = sceneTextures + uiTextures;
-        DPSZs.uniformBlocksInPool = scene.count() + 1;
-        DPSZs.setsInPool          = scene.count() + 1 + uiTextures;
+        DPSZs.uniformBlocksInPool = scene.count() + 1;           // objects + global
+        DPSZs.setsInPool          = scene.count() + 1 + uiTextures; // objects + global + UI dialogs
 
         // Finalize: aspect ratio, first command buffer, start music
         Ar = (float)windowWidth / (float)windowHeight;
         submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
 
+        //Music config
         ma_engine_init(NULL, &audioEngine);
-        ma_engine_play_sound(&audioEngine, "assets/audio/tavern.mp3", NULL);
+        ma_engine_play_sound(&audioEngine, "assets/audio/tavern_ambience.mp3", NULL);
     }
     //Runs once at startup and on every window resize
     //Rebuilds everything that depends on the swapchain (on resize everything needs to be rebuilt): Render pass, pipelines, descriptor sets
@@ -198,8 +206,7 @@ protected:
         for (auto& dlg : npcDialogs)
             dlg.initDescriptorSet(this, &DSL_UI);
     }
-    //Runs on window resize, right before init rebuilds
-    //Runs during shutdown
+
     void pipelinesAndDescriptorSetsCleanup() {
         P.cleanup();
         P_UI.cleanup();
@@ -228,6 +235,7 @@ protected:
         VD.cleanup();
         VD_UI.cleanup();
 
+        //Music
         ma_engine_uninit(&audioEngine);
     }
     //Bridges the framework's C-style callback to our C++ method.
@@ -240,6 +248,7 @@ protected:
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
         RP.begin(commandBuffer, currentImage);
 
+        // Draw 3D scene
         P.bind(commandBuffer);
 
         DS_Global.bind(commandBuffer, P, 0, currentImage);
@@ -283,7 +292,6 @@ protected:
         glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z)); // Y=0.0 so you don't start flying when looking up
         constexpr float MOVE_SPEED = 3.0f;
 
-
         //Movement forward/backward + collision
         glm::vec3 movementDelta = glm::vec3(0.0f);
 
@@ -305,9 +313,20 @@ protected:
                 newActive = i;
         }
         activeNpcIndex = newActive;
+        if (glfwGetKey(window, GLFW_KEY_W)) {
+            movementDelta += walkDir * MOVE_SPEED * deltaT;
+        }
 
+        if (glfwGetKey(window, GLFW_KEY_S)) {
+            movementDelta -= walkDir * MOVE_SPEED * deltaT;
+        }
+
+        cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
+
+        // Toggle the nearest torch on/off with F
         torchInteraction.update(window, cameraPos);
 
+        // NPC interaction
         if (activeNpcIndex != previousActiveIndex) {
             previousActiveIndex = activeNpcIndex;
             submitCommandBuffer("main", 0, populateCommandBufferAccess, this);
@@ -325,7 +344,7 @@ protected:
             activeNpcIndex,
             cameraPos
         );
-        // For
+        //Time
         elapsedTime += deltaT;
 
         //Global UBO: build the lighting/camera struct that shader.frag reads as 'gubo'
@@ -343,6 +362,7 @@ protected:
         gubo.torchLight[2].position = glm::vec3( ROOM_HALF_T - 0.6f, LIGHT_OFFSET,  4.0f);
         gubo.torchLight[3].position = glm::vec3( ROOM_HALF_T - 0.6f, LIGHT_OFFSET, -4.0f);
 
+        // Warm orange torch color, multiplied by intensity
         glm::vec3 torchColor = glm::vec3(1.0f, 0.55f, 0.15f) * 4.0f;
         for (int i = 0; i < 4; ++i) {
             if (torchInteraction.isLit(i)) {
