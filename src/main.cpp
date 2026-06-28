@@ -290,7 +290,7 @@ protected:
         );
 
         glm::vec3 walkDir = glm::normalize(glm::vec3(forward.x, 0.0f, forward.z)); // Y=0.0 so you don't start flying when looking up
-        constexpr float MOVE_SPEED = 1.8f;
+        constexpr float MOVE_SPEED = 3.2f;
 
         //Movement forward/backward + collision
         glm::vec3 movementDelta = glm::vec3(0.0f);
@@ -313,15 +313,6 @@ protected:
                 newActive = i;
         }
         activeNpcIndex = newActive;
-        if (glfwGetKey(window, GLFW_KEY_W)) {
-            movementDelta += walkDir * MOVE_SPEED * deltaT;
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_S)) {
-            movementDelta -= walkDir * MOVE_SPEED * deltaT;
-        }
-
-        cameraPos = collisionSystem.movePlayer(cameraPos, movementDelta);
 
         // Toggle the nearest torch on/off with F
         torchInteraction.update(window, cameraPos);
