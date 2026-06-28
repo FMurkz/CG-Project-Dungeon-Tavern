@@ -669,7 +669,7 @@ void SceneObjects::updateUBOs(int currentImage,
 
     // Bar counter
     constexpr float BAR_COUNTER_SCALE = 0.007f;
-    constexpr float BAR_COUNTER_Y_OFFSET = 1.4f;
+    constexpr float BAR_COUNTER_Y_OFFSET = 1.3f;
 
     glm::mat4 barCounterModel =
           glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, BAR_COUNTER_Y_OFFSET, 0.0f))

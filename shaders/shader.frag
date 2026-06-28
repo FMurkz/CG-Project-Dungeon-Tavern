@@ -61,7 +61,7 @@ void main() {
         //lambert diff
         float diff = max(dot(N, L_torch), 0.0);
 
-        //attenuation, tweak these
+        //constant-linear-quadratic attenuation
         float attenuation = 1.0 / (1.0 + 0.1 * distance + 0.05 * distance * distance);
 
         // Flicker (each torch has different seeds)
